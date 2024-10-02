@@ -13,8 +13,10 @@ public class Measurement{
     private String id;
     private double gyroX;
     private double gyroY;
-    private double othermeasX;
-    private double othermeasY;
+    private double gyroZ;
+    private double accelX;
+    private double accelY;
+    private double accelZ;
     private LocalDateTime timestamp;
 
     public Measurement(){
@@ -26,13 +28,16 @@ public class Measurement{
         this.id = id;
     }
 
-    public Measurement(String id, double gyroX, double gyroY, double othermeasX, double othermeasY){
+    public Measurement(String id, double gyroX, double gyroY, double gyroZ double accelX, double accelY, double accelZ){
 
         this.id = id;
         this.gyroX = gyroX;
         this.gyroY = gyroY;
-        this.othermeasX = othermeasX;
-        this.othermeasY = othermeasY;
+        this.gyroZ = gyroZ;
+        this.accelX = accelX;
+        this.accelY = accelY;
+        this.accelZ = accelZ;
+
     }
 
     public String getId() {
@@ -58,20 +63,36 @@ public class Measurement{
         this.gyroY = gyroY;
     }
 
-    public double getOthermeasX() {
-        return othermeasX;
+    public double getGyroZ() {
+        return gyroZ;
     }
 
-    public void setOthermeasX(double othermeasX) {
-        this.othermeasX = othermeasX;
+    public void setGyroZ(double gyroZ) {
+        this.gyroZ = gyroZ;
     }
 
-    public double getOthermeasY() {
-        return othermeasY;
+    public double getAccelX() {
+        return accelX;
     }
 
-    public void setOthermeasY(double othermeasY) {
-        this.othermeasY = othermeasY;
+    public void setaccelX(double accelX) {
+        this.accelX = accelX;
+    }
+
+    public double getAccelY() {
+        return accelY;
+    }
+
+    public void setAccelY(double accelY) {
+        this.accelY = accelY;
+    }
+
+    public double getAccelZ() {
+        return accelZ;
+    }
+
+    public void setAccelZ(double accelZ) {
+        this.accelZ = accelZ;
     }
 
     public LocalDateTime getTimestamp() {
