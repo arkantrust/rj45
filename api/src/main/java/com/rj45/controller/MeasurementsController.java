@@ -1,15 +1,15 @@
-package com.rj45.control;
+package com.rj45.controller;
+
 import com.rj45.model.Measurement;
-import com.rj45.repository.MeasureRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.rj45.repository.MeasurementRepository;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/measurements")
-public class MeasurementController {
+@RequestMapping("/measurements")
+public class MeasurementsController {
 
-    private MeasureRepository measurementRepository;
+    private MeasurementRepository measurementRepository;
 
     @PostMapping
     public Measurement saveMeasurement(@RequestBody Measurement measurement) {

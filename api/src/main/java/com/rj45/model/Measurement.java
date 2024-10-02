@@ -13,8 +13,11 @@ public class Measurement{
     private String id;
     private double gyroX;
     private double gyroY;
+
     private double othermeasX;
+
     private double othermeasY;
+
     private LocalDateTime timestamp;
 
     public Measurement(){
