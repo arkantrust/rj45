@@ -30,7 +30,7 @@ public class TestService {
         }
 
         Test newTest = Test.builder()
-                .id(UUID.randomUUID().toString())
+                .id(UUID.randomUUID())
                 .type(test.type())
                 .measurements(test.measurements())
                 .timestamp(LocalDateTime.now())
@@ -43,14 +43,17 @@ public class TestService {
 
     public Test getTest(String id) throws EntityNotFoundException, IllegalArgumentException {
 
+        UUID uuid = null;
+
         // check id is a valid uuid
         try {
-            UUID.fromString(id);
+            uuid = UUID.fromString(id);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(id + " is not a valid UUID");
         }
 
-        return repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Test not found with id " + id));
+        return repo.findById(uuid).orElseThrow(
+                () -> new EntityNotFoundException("Test not found with id " + id));
     }
 
 }
