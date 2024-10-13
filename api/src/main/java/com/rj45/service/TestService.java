@@ -1,5 +1,4 @@
 package com.rj45.service;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,6 +10,7 @@ import com.rj45.repository.TestRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.Builder;
 
 @Service
 @RequiredArgsConstructor
