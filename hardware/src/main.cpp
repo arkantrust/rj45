@@ -19,7 +19,7 @@ const int measurementTime = 5000;
 // Wi-Fi credentials
 const char *ssid = "";
 const char *password = "";
-const char *mqtt_broker = "";
+const char *mqtt_broker = "ac06a2aefe134c358a51669006339d38.s1.eu.hivemq.cloud";
 const char *mqtt_topic = "test/start";
 
 // api URL
