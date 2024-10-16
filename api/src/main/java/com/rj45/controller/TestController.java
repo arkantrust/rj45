@@ -45,7 +45,9 @@ public class TestController {
         try {
             Test test = service.getTest(id);
             return ResponseEntity.ok(test);
-        } catch (IllegalArgumentException | EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
