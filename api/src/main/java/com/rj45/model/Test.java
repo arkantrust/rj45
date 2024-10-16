@@ -1,7 +1,6 @@
 package com.rj45.model;
 
 import org.hibernate.annotations.Type;
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -15,11 +14,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 // TODO: https://vladmihalcea.com/postgresql-array-java-list/
-// https://vladmihalcea.com/how-to-map-json-objects-using-generic-hibernate-types/
 // https://vladmihalcea.com/how-to-map-json-objects-using-generic-hibernate-types/
 
 @Entity
@@ -36,17 +33,17 @@ public class Test {
     @Column(nullable = false)
     private String type;
 
-    @Type(ListArrayType.class)
-    @Column(columnDefinition = "jsonb[]")
-    private List<Map<String, Object>> measurements;
+    @Type(MeasurementsList.class)
+    @Column(columnDefinition = "jsonb[]", nullable = false)
+    private List<Measurement> measurements;
 
-    @Column(nullable = false)
-    private LocalDateTime timestamp;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "evaluator_id", nullable = false)
     private int evaluatorId;
 
-    @Column(nullable = false)
+    @Column(name = "patient_id", nullable = false)
     private int patientId;
 
 }

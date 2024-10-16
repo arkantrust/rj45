@@ -24,16 +24,11 @@ public class TestService {
             throw new IllegalArgumentException("Test must have at least one measurement");
         }
 
-        if (test.type().equalsIgnoreCase("footing") ||
-                test.type().equalsIgnoreCase("heeling")) {
-            throw new IllegalArgumentException("Test type must be either 'footing' or 'heeling'");
-        }
-
         Test newTest = Test.builder()
                 .id(UUID.randomUUID())
                 .type(test.type())
                 .measurements(test.measurements())
-                .timestamp(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
                 .evaluatorId(0)
                 .patientId(0)
                 .build();
