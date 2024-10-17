@@ -1,0 +1,100 @@
+body {
+    display: flex;
+    justify-content: center ;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.415) 0%, rgba(4, 87, 80, 0.923) 100%), url('../assets/enfermera.jpg');
+    background-size:cover;
+    background-position: center;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+
+.login-container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: -30px 30px 10px rgba(0, 0, 0, 0.2); 
+    
+}
+
+h2 {
+    font-family: Montserrat;
+    font-weight: 900;
+    margin-bottom: 30px;
+    color: #045750;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+label {
+    font-weight: 500;
+    font-family: Montserrat;
+    display: block;
+    text-align: left;
+    margin-bottom: -0.5px;
+    margin-left: 30px;
+    color: #666;
+}
+
+.inputs{
+
+    font-family: sans-serif;
+    width: 80%;
+    padding: 10px;
+    border: 2px solid #045750;
+    border-radius: 50px;
+    box-sizing:content-box;
+    text-align: center;
+    margin: 2%;
+}
+
+button {
+
+    font-weight: 900;
+    width: 85%;
+    padding: 10px;
+    background-color: #045750;
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 5%;
+    transition: transform 0.2s ease; 
+}
+
+button:active {
+    transform: scale(0.75);
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.background-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.8) 0%, rgba(4, 87, 80, 0.8) 100%), url('../assets/enfermera.png');
+    background-size: cover;
+    background-position: center;
+    transition: opacity 1s ease-in-out;
+    opacity: 1;
+    z-index: -1;
+}
+
+
+.background-fade-out {
+    opacity: 0;
+}
