@@ -25,10 +25,12 @@ body {
 
 .info-container {
     width: 30%; /* Ajusta el ancho según necesites */
-    padding-right: 30px; /* Espacio entre el texto y el formulario */
+    padding-right: 50px; /* Espacio entre el texto y el formulario */
 }
 
 .info-container p {
+    font-size: 20px;
+    font-style: bold;
     max-width: 100%; /* Limita el ancho máximo del párrafo */
     padding: 10px; /* Añade relleno interno para estética */
     margin-bottom: 10px; /* Añade espacio entre párrafos */
