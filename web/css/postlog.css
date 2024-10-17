@@ -1,0 +1,11 @@
+body {
+    display: flex;
+    justify-content: center ;
+    align-items: center;
+    height: 100vh;
+    background: rgb(60, 60, 60);
+    background-size:cover;
+    background-position: center;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
