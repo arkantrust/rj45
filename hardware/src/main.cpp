@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <PubSubClient.h>
 
 // Enum for LED state
 enum State
@@ -16,14 +17,20 @@ enum State
 const int measurementTime = 5000;
 
 // Wi-Fi credentials
-const char *ssid = "";
-const char *password = "";
+const char *ssid = "LABREDES";
+const char *password = "F0rmul4-1";
+const char *mqtt_broker = "broker.emqx.io";
+const char *mqtt_topic = "test/start";
+const char *mqtt_user = "A00395404Esp";
+//const char *mqtt_pass = "Esp32pass";
+const int mqtt_port = 1883;
 
 // api URL
-const char *serverURL = "http://192.168.2.3:8085";
+const char *serverURL = "http://192.168.130.55:8080/tests";
 
 // Set server port
-WiFiServer server(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 // Timeout settings
 unsigned long currentTime = millis();
@@ -54,7 +61,45 @@ void setLed(State state)
   }
 }
 
-void sendJSON(JsonDocument jsonDoc) {
+
+
+DynamicJsonDocument readMpu()
+{
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  DynamicJsonDocument doc(200);
+  doc["accel"]["x"] = a.acceleration.x;
+  doc["accel"]["y"] = a.acceleration.y;
+  doc["accel"]["z"] = a.acceleration.z;
+  doc["gyro"]["x"] = g.gyro.x;
+  doc["gyro"]["y"] = g.gyro.y;
+  doc["gyro"]["z"] = g.gyro.z;
+
+  return doc;
+}
+
+
+void connectMQTT(){
+
+    while(!client.connected()){
+
+        Serial.print("Connecting to MQTT");
+        if(client.connect(mqtt_user)){
+
+            Serial.print("Connected.");
+            client.subscribe(mqtt_topic);
+        }
+        else{
+
+            Serial.print("Failed: ");
+            Serial.print(client.state());
+            delay(5000);
+        }
+    }
+}
+
+void sendJSON(DynamicJsonDocument jsonDoc) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
 
@@ -88,8 +133,42 @@ void sendJSON(JsonDocument jsonDoc) {
   }
 }
 
+void mqttCallback(char* topic, byte *msg, unsigned int length) {
+    Serial.print("Message received [ ");
+    Serial.print(topic);
+    Serial.print(" ] ");
+
+    String testType = ""; 
+
+    for (int i = 0; i < length; i++) {
+        testType += (char)msg[i];  
+    }
+
+    testType.trim();
+    Serial.println("ME ESTA LLEGANDO ESTO: " + testType);
+
+    if (testType.equalsIgnoreCase("heeling") || testType.equalsIgnoreCase("footing")) {
+        setLed(READING);
+
+        StaticJsonDocument<200> doc;
+        doc["type"] = testType;
+        JsonArray data = doc["data"].to<JsonArray>();
+        long time = millis();
+        while (millis() - time < measurementTime) {
+            data.add(readMpu());
+            delay(100);
+        }
+
+        sendJSON(doc);
+        setLed(READY);
+    } else {
+        Serial.println("Type must be either footing or heeling!");
+    }
+}
+
+
 // Start Wi-Fi and HTTP server
-String startHttp()
+void startWiFiMQTT()
 {
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -99,117 +178,56 @@ String startHttp()
     delay(500);
     Serial.print(".");
   }
-  server.begin();
-  return WiFi.localIP().toString();
+  client.setServer(mqtt_broker, mqtt_port);
+  client.setCallback(mqttCallback);
+
 }
 
 // Initialize MPU6050
 void startMpu()
 {
   Serial.println("Connecting to MPU6050");
-  if (!mpu.begin())
-  {
-    Serial.println("Failed to find MPU6050 chip");
-    while (true)
-    {
-      delay(10);
-    }
+
+  while (!mpu.begin()){
+
+      if (mpu.begin()){
+        Serial.println("Connected to MPU6050");
+        mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+        mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+        mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+        break;
+      }
+      else{
+
+        Serial.println("Failed to find MPU6050 chip");
+        delay(5000);
+
+      }
+
   }
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
 }
 
 // Read MPU data and return JSON
-JsonDocument readMpu()
-{
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
-
-  JsonDocument doc;
-  doc["accel"]["x"] = a.acceleration.x;
-  doc["accel"]["y"] = a.acceleration.y;
-  doc["accel"]["z"] = a.acceleration.z;
-  doc["gyro"]["x"] = g.gyro.x;
-  doc["gyro"]["y"] = g.gyro.y;
-  doc["gyro"]["z"] = g.gyro.z;
-
-  return doc;
-}
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   delay(2000);
   startMpu();
-  String ip = startHttp();
+  startWiFiMQTT();
   setLed(READY);
-  Serial.print("IP Address: ");
-  Serial.println(ip);
+
 }
 
 void loop()
 {
-  WiFiClient client = server.available();
-  if (client)
-  {
-    currentTime = millis();
-    previousTime = currentTime;
-    String header = "";
-    String currentLine = "";
+  if(!client.connected()){
 
-    while (client.connected() && currentTime - previousTime <= timeoutTime)
-    {
-      if (client.available())
-      {
-        char c = client.read();
-        header += c;
-
-        if (c == '\n')
-        {
-          if (currentLine.length() == 0)
-          {
-            // the test type is received as a parameter in the URL for example http://192.168.128.5/?test=footing
-            String testType = header.substring(header.indexOf("test=") + 5, header.indexOf("HTTP") - 1);
-            if (testType == "footing" || testType == "heeling") {
-              Serial.println(testType);
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:application/json");
-              client.println("Connection: close");
-              client.println();
-
-              // Read and send MPU data
-              JsonDocument doc;
-              doc["type"] = testType;
-              JsonArray data = doc["data"].to<JsonArray>();
-              long time = millis();
-              while (millis() - time < measurementTime)
-              {
-                data.add(readMpu());
-                delay(100);
-              }
-
-              sendJSON(doc);
-            }
-            else
-            {
-              client.println("HTTP/1.1 400 Bad Request");
-            }
-            break;
-          }
-          else
-          {
-            currentLine = "";
-          }
-        }
-        else if (c != '\r')
-        {
-          currentLine += c;
-        }
-      }
-    }
-    client.stop();
-    setLed(READY);
+    connectMQTT();
   }
+
+  client.loop();
+
 }
