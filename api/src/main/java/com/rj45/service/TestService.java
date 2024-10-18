@@ -1,6 +1,7 @@
 package com.rj45.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -49,6 +50,11 @@ public class TestService {
 
         return repo.findById(uuid).orElseThrow(
                 () -> new EntityNotFoundException("Test not found with id " + id));
+    }
+
+    // TODO: use a patientId or evaluatorId to filter tests
+    public List<Test> getAllTests() {
+        return repo.findAll();
     }
 
 }
