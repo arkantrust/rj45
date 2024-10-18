@@ -1,5 +1,3 @@
-version: '3.9'
-
 name: rj45-backend
 
 services:
@@ -12,7 +10,7 @@ services:
       - '8080:8080' # host:container
     environment:
       - DB_URL=postgresql://rj45-db/db
-      - DB_USE=postgres
+      - DB_USER=postgres
       - DB_PASSWORD=postgres
     depends_on:
       - db
@@ -35,7 +33,7 @@ services:
       - backend
 
 volumes:
-  - rj45-db
+  rj45-db:
 
 networks:
   backend:
