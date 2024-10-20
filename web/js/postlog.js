@@ -47,6 +47,7 @@ tests.forEach(test => {
     const div = document.createElement('div');
     div.className = 'test';
     div.innerHTML = ` ${test.created_at} <br>
+                    <strong>Tipo:</strong> ${test.type}<br>
                     <span class="details"><strong>ID:</strong> ${test.id}<br>
                     <strong>Creado:</strong> ${test.created_at}<br>
                     <strong>Mediciones:</strong> ${test.measurements}</span>`;
