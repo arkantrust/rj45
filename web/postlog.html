@@ -8,16 +8,22 @@
 </head>
 <body>
     <div class="window">
-        <div class="content-container">
-            <img class="image-margin" src="../web/assets/Reddit.png" alt="Imagen de Ejemplo">
-            <p class="description" id="typewriter-text">
-                Hola [Nombre] espero estés muy bien, bienvenido al proyecto de RJ45. 
-                Para iniciar una prueba por favor haz clic en el botón asignado. 
-                Para borrar, editar y visualizar las pruebas, haz clic en gestionar.
-            </p>
-            <div class="buttons">
-                <button>Gestionar pruebas</button>
-                <button>Iniciar pruebas</button>
+        <div class="current-window">
+            <div class="content-container">
+                <img class="image-margin" src="../web/assets/Reddit.png" alt="Imagen de Ejemplo">
+                <p class="description" id="typewriter-text">
+                    Hola [Nombre] espero estés muy bien, bienvenido al proyecto de RJ45. 
+                    Para iniciar una prueba por favor haz clic en el botón asignado. 
+                    Para borrar, editar y visualizar las pruebas, haz clic en gestionar.
+                </p>
+                <div class="buttons">
+                    <button onclick="openNextwindow()">Gestionar pruebas</button>
+                    <button onclick="openNextwindow()">Iniciar pruebas</button>
+                </div>
+            </div>
+        </div>
+        <div class ="next-window">
+            <div class="content-container">
             </div>
         </div>
     </div>
