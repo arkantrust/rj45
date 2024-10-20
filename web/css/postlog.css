@@ -18,35 +18,46 @@ body {
     height: 80vh;
     width: 80%;
     max-width: 625px;
-    background: rgb(60, 60, 60);
+    background: rgba(60, 60, 60, 0);
     background-size: auto;
     background-position: center;
     margin: 0;
-    box-shadow: 0px 4px 83px rgba(0, 0, 0, 0.25);
     font-family: 'Roboto', sans-serif;
     box-sizing: border-box;
-    transform: translateX(0);
-    transition: transform 1s ease-in-out; /* La transición en el 'transform' */
 }
 
 .current-window {
-    width: 100%; /* Añade esta propiedad para que ocupe todo el contenedor */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    width: 100%;
+    max-width: 625px;
+    background: rgb(60, 60, 60);
+    background-size: auto;
+    background-position: center;
+    margin: 10;
+    box-shadow: 0px 4px 83px rgba(0, 0, 0, 0.25);
+    font-family: 'Roboto', sans-serif;
+    box-sizing: border-box;
+    transform: translateX(50%);
+    transition: transform 2s ease-in-out; /* La transición en el 'transform' */
 }
 
 .windows-container {
     display: flex;
     width: 100%; /* Doble del ancho de una ventana */
-    transition: transform 1s ease-in-out; /* Transición suave */
 }
 
 .next-window {
-    position: absolute;
+    z-index: -1;
+    position: static;
     top: 0;
     right: -100%; /* Comienza fuera de la pantalla a la derecha */
-    width: 80%;
+    width: 100%;
     max-width: 625px;
     height: 80vh;
-    background: rgb(60, 60, 60);
+    background: rgb(60, 60, 60,0.2);
     box-shadow: 0px 4px 83px rgba(0, 0, 0, 0.25);
     display: flex;
     justify-content: center;
