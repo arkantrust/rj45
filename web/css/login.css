@@ -6,7 +6,7 @@ body {
     background: rgb(60, 60, 60);
     background-size:cover;
     background-position: center;
-    margin: 0;
+    margin: auto;
     font-family: 'Roboto', sans-serif;
 }
 
@@ -25,7 +25,11 @@ body {
 
 .info-container {
     width: 30%; /* Ajusta el ancho según necesites */
-    padding-right: 50px; /* Espacio entre el texto y el formulario */
+    margin-right: 100px;
+    padding: 20px;
+    background-color: rgb(60, 60, 60,0.5);
+    box-shadow: -30px 30px 10px rgba(0, 0, 0, 0.2); 
+    
 }
 
 .info-container p {
