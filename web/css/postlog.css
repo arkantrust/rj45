@@ -64,6 +64,8 @@ body {
     align-items: center;
     opacity: 0; /* Inicialmente invisible */
     transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 
 /* Estado visible */
@@ -140,9 +142,44 @@ body {
 }
 
 .buttons button:hover {
-    background-color: #505050; /* Color de fondo al pasar el cursor */
+    background-color: #00945636; /* Color de fondo al pasar el cursor */
 }
 
 .buttons button:active {
     transform: scale(0.65); /* Pequeño efecto de escala al hacer clic */
+}
+
+.tests-containers{
+    color: white;
+    display: flex;
+    position: static;
+    background: rgba(60, 60, 60, 0);
+    display: flex;
+    flex-direction: column;
+    border: #fff;
+    text-align: center;
+    
+}
+
+.test {
+    margin: auto;
+    max-width: 605px;
+    width: 605px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: 1px solid rgb(255, 255, 255);
+}
+
+.test:hover {
+    background-color: #00945636;
+}
+
+.details {
+    display: none;
+    margin-top: 5px;
+    background-color: #f1f1f156;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
 }
