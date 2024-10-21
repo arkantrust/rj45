@@ -5,15 +5,13 @@ function openNextwindow() {
     const windowsContainer = document.querySelector('.next-window'); // Seleccionamos la ventana siguiente
     const windowsContainerMain = document.querySelector('.current-window'); // Seleccionamos el contenedor principal
 
-    // Cambiar a la siguiente ventana
+    /*// Cambiar a la siguiente ventana
     windowsContainerMain.style.transform = 'translateX(0%)'; // Mueve el contenedor principal a la izquierda
-    windowsContainer.classList.add('visible'); // Añade la clase para hacerla visible aun en beta
+    windowsContainer.classList.add('visible'); // Añade la clase para hacerla visible aun en beta*/
 
-    toggleWindow()
-
+    toggleWindow();
 
 }
-
 
 function toggleWindow() {
     {
@@ -63,3 +61,9 @@ tests.forEach(test => {
 
     container.appendChild(div);
 });
+
+function rotateImage() {
+    const image = document.getElementById('rotating-image');
+    image.classList.toggle('rotated'); 
+}
+

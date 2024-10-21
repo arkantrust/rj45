@@ -1,3 +1,5 @@
+
+/* Background of mi entire page*/
 body {
     display: flex;
     justify-content: center;
@@ -11,6 +13,8 @@ body {
     overflow: hidden; /* Evita el desplazamiento de la página */
 }
 
+
+/* The main window in postlog
 .window {
     display: flex;
     justify-content: center;
@@ -25,7 +29,13 @@ body {
     font-family: 'Roboto', sans-serif;
     box-sizing: border-box;
 }
+*/
 
+/*
+The main window in Postlog
+represents the background of 
+the box.
+*/
 .current-window {
     display: flex;
     justify-content: center;
@@ -33,7 +43,7 @@ body {
     height: 80vh;
     width: 100%;
     max-width: 625px;
-    background: rgb(60, 60, 60);
+    background: rgb(60, 60, 60,0.1);
     background-size: auto;
     background-position: center;
     margin: 10;
@@ -44,11 +54,10 @@ body {
     transition: transform 2s ease-in-out; /* La transición en el 'transform' */
 }
 
-.windows-container {
-    display: flex;
-    width: 100%; /* Doble del ancho de una ventana */
-}
-
+/* Secon window in Postolog
+this window appears when you clic
+on the buttons bellow the current-window
+*/
 .next-window {
     z-index: -1;
     position: static;
@@ -68,7 +77,9 @@ body {
     justify-content: flex-start;
 }
 
-/* Estado visible */
+/* Next window visible state
+there is an JS which calls this class
+*/
 .next-window.visible {
     opacity: 1; /* Totalmente visible */
     transform: translateX(0); /* Desplaza a la vista desde la derecha */
@@ -76,23 +87,10 @@ body {
 }
 
 
-.content-container p {
-    font-size: 25px;
-    font-style: normal;
-    max-width: 76%; /* Limita el ancho máximo del párrafo */
-    margin-bottom: 50px; /* Añade espacio entre párrafos */
-    line-height: 1.5; /* Mejora la legibilidad */
-    color: #ffffff; /* Color del texto */
-    text-align: justify;
-}
-
-.text-container {
-    width: 100%;
-    max-width: 100%; /* Limita el ancho máximo del texto */
-    overflow: hidden; /* Previene el desbordamiento */
-    white-space: pre-wrap; /* Preserva espacios y saltos de línea */
-    margin-bottom: 20px;
-}
+/*
+In this container are the principal elements
+of the main window, like the image, the paragraph and the buttons
+*/
 
 .content-container {
     display: flex;
@@ -102,29 +100,41 @@ body {
     text-align: center;
     width: 100%;
     height: 100%; /* Ocupa toda la altura del contenedor */
+} 
+
+/*
+modify the paragraph inside the content container
+*/
+
+.content-container p {
+    font-size: 23px;
+    font-style: normal;
+    max-width: 76%; /* Limita el ancho máximo del párrafo */
+    margin-bottom: 50px; /* Añade espacio entre párrafos */
+    line-height: 1.5; /* Mejora la legibilidad */
+    color: #ffffff; /* Color del texto */
+    text-align: justify;
 }
+
+/* This is the image inside the div content-container*/
 
 .image-margin {
     max-width: 100%;
     height: auto;
     margin-bottom: 20px;
     transform: rotate(0deg);
-    transition: transform 0.5s;
+    transition: transform 1s;
 }
 
-.image-margin:hover{
-
+/*This is the class rotated for our class image-margin, this is used
+by the js to calle it after the button touch*/
+.image-margin.rotated {
     transform: rotate(360deg);
-
 }
 
-.description {
-    max-width: 80%;
-    margin-bottom: 30px;
-    line-height: 1.5;
-    text-align: justify;
-}
 
+
+/* The container for the buttons inside the content-container*/
 .buttons {
     display: flex;
     flex-direction: column; /* Cambia la dirección a columna */
@@ -134,6 +144,9 @@ body {
     width: 100%;
 }
 
+/* 
+modify the propertie of the buttons inside the conatiner buttons
+*/
 .buttons button {
     padding: 30px; /* Ajusta el padding uniformemente */
     font-size: 25px; /* Aumenta el tamaño de la fuente */
@@ -149,14 +162,29 @@ body {
     text-align: center; /* Asegura que el texto esté centrado */
 }
 
+
+/* 
+Animation when clic is on the button
+*/
 .buttons button:hover {
     background-color: #00945636; /* Color de fondo al pasar el cursor */
 }
 
+/* 
+Animation when clic the button
+*/
 .buttons button:active {
+    
     transform: scale(0.65); /* Pequeño efecto de escala al hacer clic */
+
+    
 }
 
+
+
+/* 
+containers for the tests, only inicialitize.
+*/
 .tests-containers{
     color: white;
     display: flex;
@@ -169,6 +197,11 @@ body {
     
 }
 
+
+
+/* 
+div class for each test 
+*/
 .test {
     margin: auto;
     max-width: 605px;
@@ -179,10 +212,17 @@ body {
     border: 1px solid rgb(255, 255, 255);
 }
 
+
+/* 
+Animation color 
+*/
 .test:hover {
     background-color: #00945636;
 }
 
+/* 
+Onclic details of tests
+*/
 .details {
     display: none;
     margin-top: 5px;
