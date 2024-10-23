@@ -22,7 +22,6 @@ const char *password = "F0rmul4-1";
 const char *mqtt_broker = "broker.emqx.io";
 const char *mqtt_topic = "test/start";
 const char *mqtt_user = "A00395404Esp";
-//const char *mqtt_pass = "Esp32pass";
 const int mqtt_port = 1883;
 
 // api URL
@@ -61,14 +60,12 @@ void setLed(State state)
   }
 }
 
-
-
 DynamicJsonDocument readMpu()
 {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
-  DynamicJsonDocument doc(200);
+  DynamicJsonDocument doc(256);
   doc["accel"]["x"] = a.acceleration.x;
   doc["accel"]["y"] = a.acceleration.y;
   doc["accel"]["z"] = a.acceleration.z;
@@ -76,27 +73,22 @@ DynamicJsonDocument readMpu()
   doc["gyro"]["y"] = g.gyro.y;
   doc["gyro"]["z"] = g.gyro.z;
 
+  Serial.println(doc.as<String>());
   return doc;
 }
 
-
-void connectMQTT(){
-
-    while(!client.connected()){
-
-        Serial.print("Connecting to MQTT");
-        if(client.connect(mqtt_user)){
-
-            Serial.print("Connected.");
-            client.subscribe(mqtt_topic);
-        }
-        else{
-
-            Serial.print("Failed: ");
-            Serial.print(client.state());
-            delay(5000);
-        }
+void connectMQTT() {
+  while (!client.connected()) {
+    Serial.println("Connecting to MQTT");
+    if (client.connect(mqtt_user)) {
+      Serial.println("Connected and subscribed to " + String(mqtt_topic));
+      client.subscribe(mqtt_topic);
+    } else {
+      Serial.print("Failed: ");
+      Serial.println(client.state());
+      delay(5000);
     }
+  }
 }
 
 void sendJSON(DynamicJsonDocument jsonDoc) {
@@ -113,16 +105,16 @@ void sendJSON(DynamicJsonDocument jsonDoc) {
     String jsonString;
     serializeJson(jsonDoc, jsonString);
 
-    // Send the POST request with the JSON data
+    // Send the POST request with the JSON measurements
     int httpResponseCode = http.POST(jsonString);
 
     // Check the response
     if (httpResponseCode > 0) {
       String response = http.getString();
-      Serial.println("Response:");
+      Serial.print("Response: ");
       Serial.println(response);
     } else {
-      Serial.print("Error sending POST: ");
+      Serial.print("Error sending POST. Response code: ");
       Serial.println(httpResponseCode);
     }
 
@@ -133,101 +125,87 @@ void sendJSON(DynamicJsonDocument jsonDoc) {
   }
 }
 
-void mqttCallback(char* topic, byte *msg, unsigned int length) {
-    Serial.print("Message received [ ");
-    Serial.print(topic);
-    Serial.print(" ] ");
+void mqttCallback(char *topic, byte *msg, unsigned int length) {
 
-    String testType = ""; 
+  String testType = "";
 
-    for (int i = 0; i < length; i++) {
-        testType += (char)msg[i];  
+  for (int i = 0; i < length; i++) {
+    testType += (char)msg[i];
+  }
+
+  testType.trim();
+  Serial.println("Received " + String(testType) + " test request from " + String(topic));
+
+  if (testType.equalsIgnoreCase("heeling") || testType.equalsIgnoreCase("footing")) {
+    setLed(READING);
+
+    StaticJsonDocument<2048> doc;
+    doc["type"] = testType;
+    JsonArray measurements = doc["measurements"].to<JsonArray>();
+    long time = millis();
+    while (millis() - time < measurementTime) {
+      measurements.add(readMpu());
+      delay(50);
     }
 
-    testType.trim();
-    Serial.println("ME ESTA LLEGANDO ESTO: " + testType);
-
-    if (testType.equalsIgnoreCase("heeling") || testType.equalsIgnoreCase("footing")) {
-        setLed(READING);
-
-        StaticJsonDocument<200> doc;
-        doc["type"] = testType;
-        JsonArray data = doc["data"].to<JsonArray>();
-        long time = millis();
-        while (millis() - time < measurementTime) {
-            data.add(readMpu());
-            delay(100);
-        }
-
-        sendJSON(doc);
-        setLed(READY);
-    } else {
-        Serial.println("Type must be either footing or heeling!");
-    }
+    Serial.println(doc.as<String>());
+    sendJSON(doc);
+    setLed(READY);
+  }
+  else
+  {
+    Serial.println("Type must be either footing or heeling!");
+  }
 }
 
-
 // Start Wi-Fi and HTTP server
-void startWiFiMQTT()
-{
+void startWiFiMQTT() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   client.setServer(mqtt_broker, mqtt_port);
   client.setCallback(mqttCallback);
-
 }
 
 // Initialize MPU6050
-void startMpu()
-{
-  Serial.println("Connecting to MPU6050");
+// https://adafruit.github.io/Adafruit_MPU6050/html/class_adafruit___m_p_u6050.html
+void startMpu() {
+  Serial.println("Attempting to connect with MPU6050");
 
-  while (!mpu.begin()){
+  while (!mpu.begin()) {
 
-      if (mpu.begin()){
-        Serial.println("Connected to MPU6050");
-        mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-        mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-        mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-        break;
-      }
-      else{
-
-        Serial.println("Failed to find MPU6050 chip");
-        delay(5000);
-
-      }
-
+    if (mpu.begin()) {
+      Serial.println("Connected to MPU6050");
+      mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+      mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+      mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+      break;
+    } else {
+      Serial.println("Failed to connect to MPU6050 chip");
+      delay(5000);
+    }
   }
-
 }
 
-// Read MPU data and return JSON
+// Read MPU measurements and return JSON
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   delay(2000);
   startMpu();
   startWiFiMQTT();
   setLed(READY);
-
 }
 
-void loop()
-{
-  if(!client.connected()){
-
+void loop(){
+  if (!client.connected()) {
     connectMQTT();
   }
 
   client.loop();
-
 }
