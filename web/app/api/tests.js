@@ -30,6 +30,3 @@ export async function getTests() {
         return tests;
     }
 }
-
-export async function addTest(type) {
-}

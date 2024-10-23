@@ -42,6 +42,8 @@
 
       const test = await getTest(testId);
 
+      console.log(test);
+
       // Prepare time axis assuming 10Hz frequency (0.1s intervals)
       const timeLabels = test.measurements.map((_, index) => (index * 0.1).toFixed(1)); // e.g., [0.0, 0.1, 0.2, ...]
 
