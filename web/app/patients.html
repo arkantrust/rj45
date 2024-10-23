@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tests - RJ45</title>
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/patients.css">
+  <script async module src="js/patients.js"></script>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <a href="/">RJ45</a>
+      <a href="/tests.html">Tests</a>
+      <a href="/login.html">Iniciar sesión</a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>Test Viewer</h1>
+    <div class="actions">
+      <input type="text" id="search-bar" placeholder="Search patients...">
+      <button id="search-btn">Search</button>
+      <button id="add-test-btn">Add New Patient</button>
+    </div>
+    <table id="tests-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Test data will be populated here by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+</body>
+
+</html>
