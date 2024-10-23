@@ -1,4 +1,4 @@
-import { getTests } from './api/tests.js';
+import { getTests } from '../api/tests.js';
 
 const testsTableBody = document.querySelector('#tests-table tbody');
 
@@ -13,7 +13,7 @@ function populateTestsTable(tests) {
               <td>${new Date(test.createdAt).toLocaleDateString()}</td>
           `;
     row.addEventListener('click', () => {
-      window.location.href = `/tests/${test.id}`;
+      window.location.href = `/test/?id=${test.id}`;
     });
     testsTableBody.appendChild(row);
   });
