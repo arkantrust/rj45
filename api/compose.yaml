@@ -3,6 +3,8 @@ name: rj45-backend
 services:
   api:
     image: 'rj45-api:latest'
+    restart: always
+    container_name: rj45-api
     build:
       context: .
       dockerfile: Dockerfile

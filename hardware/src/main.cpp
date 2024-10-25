@@ -25,7 +25,7 @@ const char *mqtt_user = "A00395404Esp";
 const int mqtt_port = 1883;
 
 // api URL
-const char *serverURL = "http://192.168.130.55:8080/tests";
+const char *serverURL = "http://192.168.130.119:8080/tests"; // "http://192.168.130.55:8080/tests";
 
 // Set server port
 WiFiClient espClient;
@@ -109,14 +109,9 @@ void sendJSON(DynamicJsonDocument jsonDoc) {
     int httpResponseCode = http.POST(jsonString);
 
     // Check the response
-    if (httpResponseCode > 0) {
       String response = http.getString();
       Serial.print("Response: ");
       Serial.println(response);
-    } else {
-      Serial.print("Error sending POST. Response code: ");
-      Serial.println(httpResponseCode);
-    }
 
     // End the connection
     http.end();
