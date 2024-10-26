@@ -89,7 +89,7 @@ public class MeasurementsList implements UserType<List<Measurement>> {
         }
         List<Measurement> copy = new ArrayList<>(value.size());
         for (Measurement measurement : value) {
-            copy.add(new Measurement(measurement.getAccel(), measurement.getGyro()));
+            copy.add(new Measurement(measurement.getAccel(), measurement.getGyro(), measurement.getTimestamp()));
         }
         return copy;
     }
