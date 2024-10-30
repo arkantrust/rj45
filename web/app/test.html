@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Details</title>
+  <link rel="stylesheet" href="/test-id.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Test Visualization</h1>
+
+    <!-- Create separate canvas elements for each graph -->
+    <div class="chart-container">
+      <canvas id="chartAccelX" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="chartAccelY" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="chartAccelZ" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="chartGyroX" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="chartGyroY" width="400" height="200"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="chartGyroZ" width="400" height="200"></canvas>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getTest } from '/api/tests.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const testId = new URLSearchParams(window.location.search).get('id');
+
+      const test = await getTest(testId);
+
+      console.log(test);
+
+      // Prepare time axis assuming 10Hz frequency (0.1s intervals)
+      const timeLabels = test.measurements.map((_, index) => (index * 0.1).toFixed(1)); // e.g., [0.0, 0.1, 0.2, ...]
+
+      // Extract data for each axis
+      const accelXData = test.measurements.map(m => m.accel.x);
+      const accelYData = test.measurements.map(m => m.accel.y);
+      const accelZData = test.measurements.map(m => m.accel.z);
+      const gyroXData = test.measurements.map(m => m.gyro.x);
+      const gyroYData = test.measurements.map(m => m.gyro.y);
+      const gyroZData = test.measurements.map(m => m.gyro.z);
+
+      // Function to create a chart
+      function createChart(ctx, label, data) {
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: timeLabels,
+            datasets: [{
+              label: label,
+              data: data,
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Time (s)'
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Value'
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Create charts for each data set
+      createChart(document.getElementById('chartAccelX').getContext('2d'), 'X Acceleration', accelXData);
+      createChart(document.getElementById('chartAccelY').getContext('2d'), 'Y Acceleration', accelYData);
+      createChart(document.getElementById('chartAccelZ').getContext('2d'), 'Z Acceleration', accelZData);
+      createChart(document.getElementById('chartGyroX').getContext('2d'), 'X Gyroscope', gyroXData);
+      createChart(document.getElementById('chartGyroY').getContext('2d'), 'Y Gyroscope', gyroYData);
+      createChart(document.getElementById('chartGyroZ').getContext('2d'), 'Z Gyroscope', gyroZData);
+    });
+  </script>
+</body>
+
+</html>

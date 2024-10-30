@@ -12,5 +12,7 @@ public class Measurement {
     private Coordinate accel;
 
     private Coordinate gyro;
+
+    private long timestamp;
     
 }

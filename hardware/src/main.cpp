@@ -2,214 +2,276 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
-#include <ArduinoJson.h>
+#include <Arduino_JSON.h>
 #include <HTTPClient.h>
+#include <PubSubClient.h>
 
-// Enum for LED state
+// Constants
+const unsigned long MEASUREMENT_TIME = 5000;
+const unsigned long WIFI_TIMEOUT = 30000; // 30 seconds timeout for WiFi connection
+const unsigned long MQTT_RETRY_DELAY = 5000;
+const unsigned long LED_BLINK_INTERVAL = 75;
+const int MEASUREMENTS_COUNT = 250;
+const int LED_PIN = 16;
+
+// Wi-Fi and MQTT configuration
+const char *WIFI_SSID = "LABREDES";
+const char *WIFI_PASSWORD = "F0rmul4-1";
+const char *MQTT_BROKER = "broker.emqx.io";
+const char *MQTT_TOPIC = "test/start";
+const char *MQTT_USER = "A00395404Esp";
+const int MQTT_PORT = 1883;
+
+// Server configuration
+const char *SERVER_URL = "http://192.168.130.119:8080/tests";
+
+// Global objects
+Adafruit_MPU6050 mpu;
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+// Enum for LED states
 enum State
 {
   READY,
   READING,
-  NOT_READY
+  NOT_READY,
+  ERROR
 };
 
-const int measurementTime = 5000;
+// Function declarations
+void setLed(State state);
+JSONVar readMpu();
+bool connectWiFi();
+void connectMQTT();
+bool initializeMPU();
+void sendJSON(const JSONVar &jsonDoc);
+void mqttCallback(char *topic, byte *msg, unsigned int length);
 
-// Wi-Fi credentials
-const char *ssid = "";
-const char *password = "";
-
-// api URL
-const char *serverURL = "http://192.168.2.3:8085";
-
-// Set server port
-WiFiServer server(80);
-
-// Timeout settings
-unsigned long currentTime = millis();
-unsigned long previousTime = 0;
-const long timeoutTime = 60000;
-
-const int ledPin = 16; // Move LED to pin 16
-
-Adafruit_MPU6050 mpu;
-
-// LED state handler
 void setLed(State state)
 {
+  static unsigned long lastBlink = 0;
+  static bool ledState = false;
+
   switch (state)
   {
   case READY:
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     break;
   case NOT_READY:
-    digitalWrite(ledPin, LOW);
+    digitalWrite(LED_PIN, LOW);
     break;
   case READING:
-    digitalWrite(ledPin, HIGH);
-    delay(75);
-    digitalWrite(ledPin, LOW);
-    delay(75);
+    if (millis() - lastBlink >= LED_BLINK_INTERVAL)
+    {
+      ledState = !ledState;
+      digitalWrite(LED_PIN, ledState);
+      lastBlink = millis();
+    }
+    break;
+  case ERROR:
+    // Fast blink for error state
+    if (millis() - lastBlink >= LED_BLINK_INTERVAL / 2)
+    {
+      ledState = !ledState;
+      digitalWrite(LED_PIN, ledState);
+      lastBlink = millis();
+    }
     break;
   }
 }
 
-void sendJSON(JsonDocument jsonDoc) {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
+JSONVar readMpu() {
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
 
-    // Specify the URL
-    http.begin(serverURL);
+  JSONVar reading;
+  reading["accel"]["x"] = a.acceleration.x;
+  reading["accel"]["y"] = a.acceleration.y;
+  reading["accel"]["z"] = a.acceleration.z;
+  reading["gyro"]["x"] = g.gyro.x;
+  reading["gyro"]["y"] = g.gyro.y;
+  reading["gyro"]["z"] = g.gyro.z;
+  reading["timestamp"] = millis();
 
-    // Set the content type as JSON
-    http.addHeader("Content-Type", "application/json");
-
-    // Serialize JSON to a string
-    String jsonString;
-    serializeJson(jsonDoc, jsonString);
-
-    // Send the POST request with the JSON data
-    int httpResponseCode = http.POST(jsonString);
-
-    // Check the response
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      Serial.println("Response:");
-      Serial.println(response);
-    } else {
-      Serial.print("Error sending POST: ");
-      Serial.println(httpResponseCode);
-    }
-
-    // End the connection
-    http.end();
-  } else {
-    Serial.println("Error: Not connected to Wi-Fi");
-  }
+  return reading;
 }
 
-// Start Wi-Fi and HTTP server
-String startHttp()
+bool connectWiFi()
 {
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
+  Serial.print("Connecting to WiFi");
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  unsigned long startAttemptTime = millis();
+
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_TIMEOUT)
   {
     delay(500);
     Serial.print(".");
   }
-  server.begin();
-  return WiFi.localIP().toString();
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("\nFailed to connect to WiFi");
+    return false;
+  }
+
+  Serial.println("\nConnected to WiFi");
+  Serial.println("IP address: " + WiFi.localIP().toString());
+  return true;
 }
 
-// Initialize MPU6050
-void startMpu()
+void connectMQTT()
 {
-  Serial.println("Connecting to MPU6050");
+  while (!mqttClient.connected())
+  {
+    Serial.println("Connecting to MQTT...");
+
+    if (mqttClient.connect(MQTT_USER))
+    {
+      Serial.println("Connected to MQTT broker");
+      mqttClient.subscribe(MQTT_TOPIC);
+    }
+    else
+    {
+      Serial.print("Failed to connect to MQTT, rc=");
+      Serial.println(mqttClient.state());
+      setLed(ERROR);
+      delay(MQTT_RETRY_DELAY);
+    }
+  }
+}
+
+bool initializeMPU()
+{
+  Serial.println("Initializing MPU6050...");
+
   if (!mpu.begin())
   {
     Serial.println("Failed to find MPU6050 chip");
-    while (true)
-    {
-      delay(10);
-    }
+    return false;
   }
+
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  Serial.println("MPU6050 initialized successfully");
+  return true;
 }
 
-// Read MPU data and return JSON
-JsonDocument readMpu()
+void sendJSON(const JSONVar &jsonDoc)
 {
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("Error: WiFi not connected");
+    setLed(ERROR);
+    return;
+  }
 
-  JsonDocument doc;
-  doc["accel"]["x"] = a.acceleration.x;
-  doc["accel"]["y"] = a.acceleration.y;
-  doc["accel"]["z"] = a.acceleration.z;
-  doc["gyro"]["x"] = g.gyro.x;
-  doc["gyro"]["y"] = g.gyro.y;
-  doc["gyro"]["z"] = g.gyro.z;
+  HTTPClient http;
+  http.begin(SERVER_URL);
+  http.addHeader("Content-Type", "application/json");
 
-  return doc;
+  String jsonString = JSON.stringify(jsonDoc);
+  Serial.println(jsonString);
+  int httpResponseCode = http.POST(jsonString);
+
+  if (httpResponseCode > 0)
+  {
+    Serial.printf("HTTP Response code: %d\n", httpResponseCode);
+    String response = http.getString();
+    Serial.println("Response: " + response);
+  }
+  else
+  {
+    Serial.printf("Error sending HTTP POST: %d\n", httpResponseCode);
+    setLed(ERROR);
+  }
+
+  http.end();
+}
+
+void mqttCallback(char *topic, byte *msg, unsigned int length)
+{
+  String testType = "";
+  for (int i = 0; i < length; i++)
+  {
+    testType += (char)msg[i];
+  }
+  testType.trim();
+
+  Serial.println("Received test request: " + testType + " from topic: " + String(topic));
+
+  if (testType.equalsIgnoreCase("heeling") || testType.equalsIgnoreCase("footing"))
+  {
+    setLed(READING);
+
+    JSONVar testData;
+    testData["type"] = testType;
+
+    for (int i = 0; i < MEASUREMENTS_COUNT; i++) {
+      JSONVar reading = readMpu();
+      Serial.println(JSON.stringify(reading));
+      testData["measurements"][i] = reading;
+      // delay(50); // 50ms delay between measurements for stability
+    }
+
+    Serial.println("Sending measurements to server...");
+    sendJSON(testData);
+    setLed(READY);
+  }
+  else
+  {
+    Serial.println("Invalid test type! Must be 'footing' or 'heeling'");
+    setLed(ERROR);
+  }
 }
 
 void setup()
 {
-  Serial.begin(9600);
-  pinMode(ledPin, OUTPUT);
-  delay(2000);
-  startMpu();
-  String ip = startHttp();
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  setLed(NOT_READY);
+
+  if (!initializeMPU())
+  {
+    setLed(ERROR);
+    while (1)
+      delay(100); // Halt if MPU initialization fails
+  }
+
+  if (!connectWiFi())
+  {
+    setLed(ERROR);
+    while (1)
+      delay(100); // Halt if WiFi connection fails
+  }
+
+  mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+  mqttClient.setCallback(mqttCallback);
+
   setLed(READY);
-  Serial.print("IP Address: ");
-  Serial.println(ip);
 }
 
 void loop()
 {
-  WiFiClient client = server.available();
-  if (client)
+  if (!mqttClient.connected())
   {
-    currentTime = millis();
-    previousTime = currentTime;
-    String header = "";
-    String currentLine = "";
-
-    while (client.connected() && currentTime - previousTime <= timeoutTime)
-    {
-      if (client.available())
-      {
-        char c = client.read();
-        header += c;
-
-        if (c == '\n')
-        {
-          if (currentLine.length() == 0)
-          {
-            // the test type is received as a parameter in the URL for example http://192.168.128.5/?test=footing
-            String testType = header.substring(header.indexOf("test=") + 5, header.indexOf("HTTP") - 1);
-            if (testType == "footing" || testType == "heeling") {
-              Serial.println(testType);
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:application/json");
-              client.println("Connection: close");
-              client.println();
-
-              // Read and send MPU data
-              JsonDocument doc;
-              doc["type"] = testType;
-              JsonArray data = doc["data"].to<JsonArray>();
-              long time = millis();
-              while (millis() - time < measurementTime)
-              {
-                data.add(readMpu());
-                delay(100);
-              }
-
-              sendJSON(doc);
-            }
-            else
-            {
-              client.println("HTTP/1.1 400 Bad Request");
-            }
-            break;
-          }
-          else
-          {
-            currentLine = "";
-          }
-        }
-        else if (c != '\r')
-        {
-          currentLine += c;
-        }
-      }
-    }
-    client.stop();
+    setLed(NOT_READY);
+    connectMQTT();
     setLed(READY);
+  }
+
+  mqttClient.loop();
+
+  // Monitor WiFi connection
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    setLed(NOT_READY);
+    if (connectWiFi())
+    {
+      setLed(READY);
+    }
   }
 }

@@ -1,0 +1,80 @@
+name: rj45-backend
+
+services:
+
+  db:
+    image: 'postgres:16'
+    restart: always
+    container_name: rj45-db
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - rj45-db:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  api:
+    image: 'rj45-api:latest'
+    restart: unless-stopped
+    build:
+      context: api
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080' # host:container
+    environment:
+      - DB_URL=postgresql://rj45-db/db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    depends_on:
+      - db
+    networks:
+      - backend
+      - frontend
+
+  # analytics:
+  #   image: 'rj45-analytics:latest'
+  #   restart: unless-stopped
+  #   build:
+  #     context: analytics
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '8081:8081'
+  #   environment:
+  #     - API_URL=http://api:8080
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - backend
+  #     - frontend
+
+  web:
+    image: 'rj45-web:latest'
+    build:
+      context: web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - API_URL=http://api:8080
+      # - ANALYTICS_URL=http://analytics:8081
+      - NGINX_PORT=80
+    depends_on:
+      - api
+      # - analytics
+    networks:
+      - frontend
+
+volumes:
+  rj45-db:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
