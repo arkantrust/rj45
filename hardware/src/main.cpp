@@ -11,7 +11,7 @@ const unsigned long MEASUREMENT_TIME = 5000;
 const unsigned long WIFI_TIMEOUT = 30000; // 30 seconds timeout for WiFi connection
 const unsigned long MQTT_RETRY_DELAY = 5000;
 const unsigned long LED_BLINK_INTERVAL = 75;
-const int MEASUREMENTS_COUNT = 250;
+const int MEASUREMENTS_COUNT = 210;
 const int LED_PIN = 16;
 
 // Wi-Fi and MQTT configuration
@@ -212,9 +212,8 @@ void mqttCallback(char *topic, byte *msg, unsigned int length)
 
     for (int i = 0; i < MEASUREMENTS_COUNT; i++) {
       JSONVar reading = readMpu();
-      Serial.println(JSON.stringify(reading));
       testData["measurements"][i] = reading;
-      // delay(50); // 50ms delay between measurements for stability
+      delay(19); // 24ms delay between measurements for stability
     }
 
     Serial.println("Sending measurements to server...");
