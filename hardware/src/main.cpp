@@ -2,7 +2,7 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
-#include <Arduino_JSON.h>
+#include "ArduinoJson.h"
 #include <HTTPClient.h>
 #include <PubSubClient.h>
 
@@ -41,11 +41,11 @@ enum State
 
 // Function declarations
 void setLed(State state);
-JSONVar readMpu();
+JsonDocument readMpu();
 bool connectWiFi();
 void connectMQTT();
 bool initializeMPU();
-void sendJSON(const JSONVar &jsonDoc);
+void sendJSON(const JsonDocument &jsonDoc);
 void mqttCallback(char *topic, byte *msg, unsigned int length);
 
 void setLed(State state)
@@ -81,20 +81,21 @@ void setLed(State state)
   }
 }
 
-JSONVar readMpu() {
+void readMpu(JsonObject reading) {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
-  JSONVar reading;
-  reading["accel"]["x"] = a.acceleration.x;
-  reading["accel"]["y"] = a.acceleration.y;
-  reading["accel"]["z"] = a.acceleration.z;
-  reading["gyro"]["x"] = g.gyro.x;
-  reading["gyro"]["y"] = g.gyro.y;
-  reading["gyro"]["z"] = g.gyro.z;
-  reading["timestamp"] = millis();
+  JsonObject accel = reading["accel"].to<JsonObject>();
+  accel["x"] = a.acceleration.x;
+  accel["y"] = a.acceleration.y;
+  accel["z"] = a.acceleration.z;
 
-  return reading;
+  JsonObject gyro = reading["gyro"].to<JsonObject>();
+  gyro["x"] = g.gyro.x;
+  gyro["y"] = g.gyro.y;
+  gyro["z"] = g.gyro.z;
+
+  reading["timestamp"] = millis();
 }
 
 bool connectWiFi()
@@ -160,7 +161,7 @@ bool initializeMPU()
   return true;
 }
 
-void sendJSON(const JSONVar &jsonDoc)
+void sendJSON(const JsonDocument &jsonDoc)
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -173,7 +174,9 @@ void sendJSON(const JSONVar &jsonDoc)
   http.begin(SERVER_URL);
   http.addHeader("Content-Type", "application/json");
 
-  String jsonString = JSON.stringify(jsonDoc);
+  String jsonString;
+  serializeJson(jsonDoc, jsonString);
+
   Serial.println(jsonString);
   int httpResponseCode = http.POST(jsonString);
 
@@ -207,12 +210,13 @@ void mqttCallback(char *topic, byte *msg, unsigned int length)
   {
     setLed(READING);
 
-    JSONVar testData;
+    JsonDocument testData;
+    JsonArray measurements = testData["measurements"].to<JsonArray>();
     testData["type"] = testType;
 
     for (int i = 0; i < MEASUREMENTS_COUNT; i++) {
-      JSONVar reading = readMpu();
-      testData["measurements"][i] = reading;
+      JsonObject reading = measurements.add<JsonObject>();
+      readMpu(reading);
       delay(19); // 24ms delay between measurements for stability
     }
 
