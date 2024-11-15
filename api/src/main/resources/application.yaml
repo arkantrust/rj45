@@ -20,7 +20,10 @@ spring:
       ddl-auto: update
 
 springdoc:
+  enable-spring-security: true
+  show-login-endpoint: true
   api-docs:
-    path: /docs.json
+    path: /api.json
   swagger-ui:
     path: /docs
+    url: /api.json

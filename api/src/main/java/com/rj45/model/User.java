@@ -14,8 +14,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import com.rj45.dto.UserDto;
-
 @Entity
 @Builder
 @Data
@@ -29,27 +27,23 @@ public class User {
     private Long id;
 
     @Column(nullable = false)
-    String name;
+    private String name;
 
     @Column(nullable = false, unique = true)
-    String email;
+    private String email;
 
     // TODO: Use an enum class for different documents like passport, TI (for children), etc
     @Column(name = "national_id", nullable = false, unique = true)
     private String nationalId; // cedula
 
     @Column(nullable = false)
-    String password;
+    private String password;
 
     @Column(nullable = false)
     @Enumerated(value = EnumType.STRING)
-    Role role;
+    private Role role;
 
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean active;
-
-    public UserDto toDto() {
-        return new UserDto(id, name, email, nationalId, role.toString());
-    }
 
 }

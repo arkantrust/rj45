@@ -1,3 +1,11 @@
+application:
+  security:
+    jwt:
+      secret-key: bistLQO0RWWCEO8VTm4bh9hzhqC2JkAgeKd18xhnFWVPwQHfBQBUAtfQv6oPsxUL1szCRb7Wpo9YZaZLbr2FbIs9YrbWAIvzn9TVJDJDXw3UsR9cuyX8TVxlirER88T86IKA0WwL6RmR0bjpS7blrQj0v6GzCDSbH9ELz8pzeGiXJENvcqKYF2+/Y0OisRRJs7pkPtazd0efaw2QkQ8U4Y+kdbz6uiI8Wq/CC7/BVsBQGPEHm/pVYtsHQ0bt/7kccjtEr63bbhQWzHtdnYufBidRLH5A1YnPRVVBA20Y+G8S535yAr13GlHq/CpL9Ss1aXPCB4xtuNEKqBYtUTf9JQ==
+      expiration: 14400000 # 4 hours
+      refresh-token:
+        expiration: 1296000000 # 15 days
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/dev

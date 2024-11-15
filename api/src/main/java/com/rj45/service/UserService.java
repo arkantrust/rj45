@@ -10,7 +10,8 @@ import java.util.Optional;
 
 import com.rj45.model.User;
 import com.rj45.repository.UserRepository;
-import com.rj45.dto.UserDto;
+import com.rj45.util.EmailValidator;
+import com.rj45.util.NationalIdValidator;
 
 @Service
 @RequiredArgsConstructor
@@ -18,50 +19,35 @@ public class UserService {
     
     private final UserRepository repo;
 
-    private boolean isEmail(String username) {
-        return username.contains("@");
-    }
-
-    private boolean isNationalId(String username) throws IllegalArgumentException {
-        try {
-            Integer.parseInt(username);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public UserDto getById(Long id) throws EntityNotFoundException {
-        User u = repo.getReferenceById(id);
+    public User getById(Long id) throws EntityNotFoundException {
+        User u = repo.findById(id).orElseThrow(EntityNotFoundException::new);
 
         if (!u.isActive())
             throw new EntityNotFoundException();
         
-        return u.toDto();
+        return u;
     }
 
-    public UserDto getByUsername(String username) throws EntityNotFoundException, IllegalArgumentException {
+    public User getByUsername(String username) throws EntityNotFoundException, IllegalArgumentException {
         Optional<User> box = null;
 
         // username is an email
-        if (isEmail(username)) {
-            box = repo.getByEmail(username);
-        } else if (isNationalId(username)) {
-            box = repo.getByNationalId(username);
+        if (new EmailValidator(username).isValid()) {
+            box = repo.findByEmail(username);
+        } else if (new NationalIdValidator(username).isValid()) {
+            box = repo.findByNationalId(username);
         } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Invalid username");
         }
 
         if (!box.isPresent() || !box.get().isActive())
-            throw new EntityNotFoundException();
+            System.out.println("User not found");
         
-        return box.get().toDto();
+        return box.get();
     }
 
-    public UserDto update(Long id, String name, String email, String nationalId) throws EntityNotFoundException, IllegalArgumentException {
-        User u = repo.getReferenceById(id);
+    public User update(Long id, String name, String email, String nationalId) throws EntityNotFoundException, IllegalArgumentException {
+        User u = repo.findById(id).orElseThrow(EntityNotFoundException::new);
 
         if (!u.isActive())
             throw new EntityNotFoundException();
@@ -70,21 +56,14 @@ public class UserService {
         u.setEmail(email != null ? email : u.getEmail());
         u.setNationalId(nationalId != null ? nationalId : u.getNationalId());
 
-        repo.save(u);
-
-        return u.toDto();
+        return repo.save(u);
     }
 
-    // TODO: delete user by id
     public void delete(Long id) throws EntityNotFoundException {
-        User u = repo.getReferenceById(id);
-
-        if (!u.isActive())
+        if (!repo.existsById(id))
             throw new EntityNotFoundException();
 
-        u.setActive(false);        
-
-        repo.save(u);
+        repo.deleteProfile(id);
     }
 
 }

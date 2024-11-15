@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 
 import com.rj45.service.UserService;
-import com.rj45.dto.UserDto;
+import com.rj45.model.User;
 
 // TODO: JWT authorization
 @RestController
@@ -27,11 +27,23 @@ public class UserController {
 
     private final UserService service;
 
+    private record UserResponse(
+        Long id,
+        String name,
+        String email,
+        String nationalId,
+        String role
+    ) {
+        public UserResponse(User u) {
+            this(u.getId(), u.getName(), u.getEmail(), u.getNationalId(), u.getRole().toString());
+        }
+    };
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         try {
-            var user = service.getById(id);
-            return ResponseEntity.ok(user);
+            var u = service.getById(id);
+            return ResponseEntity.ok(new UserResponse(u));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
@@ -40,8 +52,8 @@ public class UserController {
     @GetMapping()
     public ResponseEntity<?> getByUsername(@RequestParam("username") String username) {
         try {
-            var user = service.getByUsername(username);
-            return ResponseEntity.ok(user);
+            var u = service.getByUsername(username);
+            return ResponseEntity.ok(new UserResponse(u));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
@@ -54,8 +66,8 @@ public class UserController {
     @PutMapping
     public ResponseEntity<?> update(@RequestBody UpdateUserRequest u) {
         try {
-            UserDto updated = service.update(u.id(), u.name(), u.email(), u.nationalId());
-            return ResponseEntity.ok(updated);
+            var updated = service.update(u.id(), u.name(), u.email(), u.nationalId());
+            return ResponseEntity.ok(new UserResponse(updated));
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
