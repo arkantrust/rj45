@@ -1,0 +1,12 @@
+spring:
+  devtools:
+    livereload:
+      enabled: false
+    add-properties: false
+  datasource:
+    url: jdbc:${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: none
