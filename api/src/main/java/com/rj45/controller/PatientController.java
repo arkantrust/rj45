@@ -1,55 +1,101 @@
 package com.rj45.controller;
 
-import com.rj45.model.Patient;
-import com.rj45.repository.PatientRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
+
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.Optional;
+import org.springframework.lang.Nullable;
 
+import lombok.RequiredArgsConstructor;
+
+import com.rj45.service.PatientService;
+
+// TODO: JWT authorization
 @RestController
-@CrossOrigin(maxAge = 3600)
-public class PatientController{
+@RequestMapping("/patients")
+@CrossOrigin(origins = "*", maxAge = 3600)
+@RequiredArgsConstructor
+public class PatientController {
 
-    @Autowired
-    private PatientRepository patientRepository;
+    private final PatientService service;
 
-    @PostMapping("patients/create")
-    public ResponseEntity<?> createPatient(@RequestBody Patient patient) {
-        patientRepository.save(patient);
-        return ResponseEntity.status(200).body(patient);
+    @GetMapping()
+    public ResponseEntity<?> getAll(@RequestParam(name="username", required=false) String username) {
+        if (username != null) {
+            try {
+                var patient = service.getByUsername(username);
+                return ResponseEntity.ok(patient);
+            } catch (EntityNotFoundException e) {
+                return ResponseEntity.notFound().build();
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+        }
+
+        var patients = service.getAll();
+        return ResponseEntity.status(200).body(patients);
     }
-    //users?email=domic.rincon@gmail.com -> Request
-    //users/domic.rincon@gmail.com -> Path Variable
-    @GetMapping("users")
-    public ResponseEntity<?> getPatientById(@RequestParam("email") String id){
-        Optional<Patient> optPat = patientRepository.findById(id);
-        if(optPat.isPresent()){
-            var user = optPat.get();
-            return ResponseEntity.status(200).body(user);
-        }else{
-            return ResponseEntity.status(404).body("User not found");
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        try {
+            var patient = service.getById(id);
+            return ResponseEntity.ok(patient);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
-    @GetMapping("users/list")
-    public ResponseEntity<?> listPatients(@RequestHeader("Authorization") String authorization) {
+    private record AddPatientRequest(String name, String email, String nationalId) {
+    };
 
-        var users = patientRepository.findAll();
-
-        return ResponseEntity.status(200).body(users);
-
-
+    @PostMapping()
+    public ResponseEntity<?> add(@RequestBody AddPatientRequest p) {
+        try {
+            var added = service.add(p.name(), p.email(), p.nationalId());
+            return ResponseEntity.ok(added);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
-    @DeleteMapping("/patients/{natID}")
-    public ResponseEntity<?> deletePatient(@PathVariable String natID) {
-        Optional<Patient> patient = patientRepository.findById(natID);
-        if (patient.isPresent()) {
-            patientRepository.deleteById(natID);
-            return ResponseEntity.status(200).body("Patient deleted successfully");
-        } else {
-            return ResponseEntity.status(404).body("Patient not found");
+    private record UpdatePatientRequest(
+        Long id,
+        @Nullable String name,
+        @Nullable String email,
+        @Nullable String nationalId
+        ) {};
+
+    @PutMapping
+    public ResponseEntity<?> update(@RequestBody UpdatePatientRequest p) {
+        try {
+            var updated = service.update(p.id(), p.name(), p.email(), p.nationalId());
+            return ResponseEntity.ok(updated);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            service.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
