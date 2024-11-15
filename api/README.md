@@ -1,4 +1,4 @@
-# RJ45 REST API
+# STAR REST API
 
 This REST API works as an abstraction to the database and handles most of the business logic.
 
@@ -12,7 +12,7 @@ This REST API works as an abstraction to the database and handles most of the bu
 ## Running the app
 
 ``` bash
-docker build -t rj45-api . && docker run -p --name rj45-api -e DB_URL=postgress://postgres:postgres@localhost:5432/db 8080:8080 rj45-api
+docker build -t star-api . && docker run -p --name star-api -e DB_URL=postgress://postgres:postgres@localhost:5432/db 8080:8080 star-api
 ```
 
 or with [docker compose](../compose.yaml):
@@ -23,11 +23,11 @@ docker compose up
 
 ## Access OpenAPI
 
-[Here's a self hosted instance of the app with Swagger UI](https://api.rj45.ddulce.app/docs)
+[Here's a self hosted instance of the app with Swagger UI](https://star.ddulce.app/api/docs)
 
 ## Client
 
-The frontend, a web application is available [here](https://rj45.ddulce.app/) and its source code [here](../web/README.md).
+The frontend, a web application is available [here](https://star.ddulce.app/) and its source code [here](../web/README.md).
 
 ## Development
 
@@ -35,11 +35,7 @@ It's still possible to run the app without docker, in fact it's recommended for 
 
 ### Environment Variables
 
-Create a `.env` file with the following content:
-
-``` bash
-DB_URL=postgres://postgres:postgres@localhost:5432/db
-```
+Create a `.env` file like `.env.example` and store it in the [resources](src/main/resources) folder.
 
 ### Database Configuration
 
@@ -48,16 +44,16 @@ DB_URL=postgres://postgres:postgres@localhost:5432/db
 This command will start a PostgreSQL 16 container with the `db` database, `postgres` user and `postgres` password.
 
 ``` bash
-docker run -d --name rj45-db -v rj45-db:/var/lib/postgresql/data -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=db -p 5432:5432 postgres:16
+docker run -d --name star-db -v star-db:/var/lib/postgresql/data -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=dev -p 5432:5432 postgres:16
 ```
 
 You can the access the database with:
 
 ``` powershell
-docker exec -it spring psql -U postgres
+docker exec -it star-db psql -U postgres -d dev
 ```
 
-> The volume `rj45-db` holds the data from the container to persist across restarts.
+> The volume `star-db` holds the data from the container to persist across restarts.
 
 #### Local
 
