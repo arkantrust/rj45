@@ -8,12 +8,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
+import lombok.RequiredArgsConstructor;
+
 import java.util.Date;
 import javax.crypto.SecretKey;
 
 import com.rj45.model.User;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     @Value("${application.security.jwt.secret-key}")

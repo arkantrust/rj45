@@ -1,7 +1,7 @@
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET_KEY}
+      secret-key: ${JWT_SECRET}
       expiration: ${JWT_EXPIRATION:300000} # 5 minutes
       refresh-token:
         expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
@@ -17,4 +17,4 @@ spring:
     password: ${DB_PASSWORD:}
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
