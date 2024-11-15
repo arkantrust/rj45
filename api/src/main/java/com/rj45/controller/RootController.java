@@ -22,11 +22,6 @@ public class RootController {
         return ResponseEntity.ok("OK");
     }
 
-    @GetMapping("/docs")
-    public ResponseEntity<?> getDocs() {
-        return ResponseEntity.ok("API documentation coming soon!");
-    }
-
     @GetMapping("/error")
     public ResponseEntity<?> getError() {
         return ResponseEntity.badRequest().body("An error occurred");
