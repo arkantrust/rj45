@@ -1,0 +1,30 @@
+name: Analytics CD
+
+env:
+  IMAGE_NAME: star-analytics
+
+on:
+  push:
+    paths:
+      - 'analytics/**'
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build and push Docker image
+      uses: ./.github/workflows/publish.yaml
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        project: analytics
+
+  deploy:
+    runs-on: aws-vm
+    steps:
+    - name: Re-run service
+      uses: ./.github/workflows/deploy.yaml
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        service: analytics

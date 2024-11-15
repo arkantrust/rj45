@@ -1,0 +1,30 @@
+name: Web CD
+
+env:
+  IMAGE_NAME: star-web
+
+on:
+  push:
+    paths:
+      - 'web/**'
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build and push Docker image
+      uses: ./.github/workflows/publish.yaml
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        project: web
+
+  deploy:
+    runs-on: aws-vm
+    steps:
+    - name: Re-run service
+      uses: ./.github/workflows/deploy.yaml
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        service: web
