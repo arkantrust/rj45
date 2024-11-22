@@ -4,6 +4,8 @@ import org.hibernate.annotations.Type;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 
@@ -12,12 +14,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-// TODO: https://vladmihalcea.com/postgresql-array-java-list/
-// https://vladmihalcea.com/how-to-map-json-objects-using-generic-hibernate-types/
 
 @Entity
 @Builder
@@ -34,16 +32,18 @@ public class Test {
     private String type;
 
     @Type(MeasurementsList.class)
-    @Column(columnDefinition = "jsonb[]", nullable = false)
+    @Column(columnDefinition = "jsonb[]")
     private List<Measurement> measurements;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "timestamp", nullable = false)
+    private long timestamp;
 
-    @Column(name = "evaluator_id", nullable = false)
-    private int evaluatorId;
+    @ManyToOne(targetEntity = Patient.class)
+    @JoinColumn(name = "patient_id", nullable = false)
+    private Patient patient;
 
-    @Column(name = "patient_id", nullable = false)
-    private int patientId;
+    @ManyToOne(targetEntity = User.class)
+    @JoinColumn(name = "evaluator_id", nullable = false)
+    private User evaluator;
 
 }

@@ -1,60 +1,161 @@
 package com.rj45.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.stereotype.Service;
 
-import com.rj45.dto.TestDto;
-import com.rj45.model.Test;
-import com.rj45.repository.TestRepository;
-
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.UUID;
+
+import com.rj45.repository.TestRepository;
+import com.rj45.model.Test;
+import com.rj45.model.Measurement;
+import com.rj45.model.User;
+import com.rj45.model.Patient;
 
 @Service
 @RequiredArgsConstructor
 public class TestService {
 
-    private final TestRepository repo;
+    private final TestRepository testRepo;
 
-    public void addTest(TestDto test) throws IllegalArgumentException {
+    private final UserService userService;
 
-        if (test.measurements().isEmpty()) {
-            throw new IllegalArgumentException("Test must have at least one measurement");
+    private final PatientService patientService;
+
+    private record TestResponse(
+        UUID id,
+        String type,
+        List<Measurement> measurements,
+        Long patientId,
+        Long evaluatorId
+    ) {};
+
+    public List<TestResponse> getAll(Long patientId, Long evaluatorId) {
+        List<Test> tests = null;
+        if (patientId != null && evaluatorId != null) {
+            tests = testRepo.findByEvaluatorIdAndPatientId(evaluatorId, patientId);
+        } else if (patientId != null) {
+            tests = testRepo.findByPatientId(patientId);
+        } else if (evaluatorId != null) {
+            tests = testRepo.findByEvaluatorId(evaluatorId);
+        } else {
+            tests = testRepo.findAll();
         }
 
-        Test newTest = Test.builder()
-                .id(UUID.randomUUID())
-                .type(test.type())
-                .measurements(test.measurements())
-                .createdAt(LocalDateTime.now())
-                .evaluatorId(0)
-                .patientId(0)
-                .build();
-
-        repo.save(newTest);
+        return tests.stream().map(t -> new TestResponse(
+            t.getId(),
+            t.getType(),
+            t.getMeasurements(),
+            t.getPatient().getId(),
+            t.getEvaluator().getId()
+        )).toList();
     }
 
-    public Test getTest(String id) throws EntityNotFoundException, IllegalArgumentException {
+    public TestResponse getById(UUID id) throws EntityNotFoundException, IllegalArgumentException {
+        var t = testRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("TEST_NOT_FOUND"));
+        return new TestResponse(
+            t.getId(),
+            t.getType(),
+            t.getMeasurements(),
+            t.getPatient().getId(),
+            t.getEvaluator().getId()
+        );
+    }
 
-        UUID uuid = null;
+    public TestResponse add(
+        String type, List<Measurement> measurements,
+        Long patientId,
+        Long evaluatorId
+    ) throws IllegalArgumentException, EntityNotFoundException {
+        if (measurements == null)
+            measurements = List.of();
 
-        // check id is a valid uuid
+        User user = null;
         try {
-            uuid = UUID.fromString(id);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(id + " is not a valid UUID");
+            user = userService.getById(evaluatorId);
+        } catch (EntityNotFoundException e) {
+            throw new EntityNotFoundException("EVALUATOR_NOT_FOUND");
         }
 
-        return repo.findById(uuid).orElseThrow(
-                () -> new EntityNotFoundException("Test not found with id " + id));
+        Patient patient = null;
+        try {
+            patient = patientService.getById(patientId);
+        } catch (EntityNotFoundException e) {
+            throw new EntityNotFoundException("PATIENT_NOT_FOUND");
+        }
+
+        Test added = Test.builder()
+            .id(UUID.randomUUID())
+            .type(type)
+            .measurements(measurements)
+            .timestamp(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
+            .evaluator(user)
+            .patient(patient)
+            .build();
+
+        Test t = testRepo.save(added);
+
+        return new TestResponse(
+            t.getId(),
+            t.getType(),
+            t.getMeasurements(),
+            t.getPatient().getId(),
+            t.getEvaluator().getId()
+        );
     }
 
-    // TODO: use a patientId or evaluatorId to filter tests
-    public List<Test> getAllTests() {
-        return repo.findAll();
+    public TestResponse update(
+        UUID id, String type,
+        List<Measurement> measurements,
+        Long evaluatorId,
+        Long patientId
+    ) throws EntityNotFoundException, IllegalArgumentException {
+        Test t = testRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("TEST_NOT_FOUND"));
+
+        User user = null;
+        if (evaluatorId != null) {
+            try {
+                user = userService.getById(evaluatorId);
+            } catch (EntityNotFoundException e) {
+                throw new EntityNotFoundException("EVALUATOR_NOT_FOUND");
+            }
+        }
+
+        Patient patient = null;
+        if (patientId != null) {
+            try {
+                patient = patientService.getById(patientId);
+            } catch (EntityNotFoundException e) {
+                throw new EntityNotFoundException("PATIENT_NOT_FOUND");
+            }
+        }
+
+        t.setType(type != null ? type : t.getType());
+        t.setMeasurements(measurements != null ? measurements : t.getMeasurements());
+        t.setEvaluator(user != null ? user : t.getEvaluator());
+        t.setPatient(patient != null ? patient : t.getPatient());
+
+        Test updated = testRepo.save(t);
+
+        return new TestResponse(
+            updated.getId(),
+            updated.getType(),
+            updated.getMeasurements(),
+            updated.getPatient().getId(),
+            updated.getEvaluator().getId()
+        );
+    }
+
+    public void delete(UUID id) throws EntityNotFoundException {
+        if (!testRepo.existsById(id))
+            throw new EntityNotFoundException("TEST_NOT_FOUND");
+
+        testRepo.deleteById(id);
     }
 
 }
