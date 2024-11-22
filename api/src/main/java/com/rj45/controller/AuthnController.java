@@ -53,8 +53,8 @@ public class AuthnController {
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
         try {
-            var tokens = service.signIn(req.username(), req.password());
-            return ResponseEntity.ok(tokens);
+            var authn = service.signIn(req.username(), req.password());
+            return ResponseEntity.ok(authn);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (BadCredentialsException e) {
@@ -68,8 +68,8 @@ public class AuthnController {
     public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authzHeader, @PathVariable Long id) {
         String token = authzHeader.substring(7);
         try {
-            var tokens = service.refresh(token, id);
-            return ResponseEntity.ok(tokens);
+            var authn = service.refresh(token, id);
+            return ResponseEntity.ok(authn);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (JwtException e) {

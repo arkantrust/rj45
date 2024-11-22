@@ -13,15 +13,12 @@ import io.jsonwebtoken.JwtException;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.rj45.repository.UserRepository;
 import com.rj45.model.User;
 import com.rj45.model.Role;
 import com.rj45.util.EmailValidator;
 import com.rj45.util.NationalIdValidator;
-import com.rj45.dto.TokenResponse;
+import com.rj45.dto.AuthnResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -35,25 +32,23 @@ public class AuthnService {
 
     private final AuthenticationManager authenticationManager;
 
-    public void signUp(String name, String email, String nationalId, String password) throws EntityExistsException, IllegalArgumentException {
+    public void signUp(String name, String email, String nationalId, String password)
+            throws EntityExistsException, IllegalArgumentException {
 
         if (!new EmailValidator(email).isValid())
-            throw new IllegalArgumentException("Invalid email");
-        
+            throw new IllegalArgumentException("INVALID_EMAIL");
+
         if (!new NationalIdValidator(nationalId).isValid())
-            throw new IllegalArgumentException("Invalid national ID");
+            throw new IllegalArgumentException("INVALID_NATIONAL_ID");
 
-        // Only if we found a conflict, we do a detailed check to provide a more informative error message
+        // Only if we found a conflict, we do a detailed check to provide a more
+        // informative error message
         if (userRepo.existsByEmailOrNationalId(email, nationalId)) {
-            List<String> errors = new ArrayList<>();
-
             if (userRepo.existsByEmail(email))
-                errors.add("Email is already registered");
+                throw new EntityExistsException("EMAIL_ALREADY_REGISTERED");
 
             if (userRepo.existsByNationalId(nationalId))
-                errors.add("National ID is already registered");
-
-            throw new EntityExistsException(String.join(", ", errors));
+                throw new EntityExistsException("NATIONAL_ID_ALREADY_REGISTERED");
         }
 
         var u = User.builder()
@@ -68,7 +63,8 @@ public class AuthnService {
         userRepo.save(u);
     }
 
-    public TokenResponse signIn(String username, String password) throws EntityNotFoundException, BadCredentialsException {
+    public AuthnResponse signIn(String username, String password)
+            throws EntityNotFoundException, BadCredentialsException {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         } catch (Exception e) {
@@ -78,26 +74,25 @@ public class AuthnService {
         var box = userRepo.findByUsername(username);
 
         if (box.isEmpty())
-            throw new EntityNotFoundException("User not found");
+            throw new EntityNotFoundException("USER_NOT_FOUND");
 
         var u = box.get();
 
         var access = jwtService.generate(u);
         var refresh = jwtService.generateRefresh(u);
-        return new TokenResponse(access, refresh);
+        return new AuthnResponse(access, refresh, u.getId());
     }
 
-
-    public TokenResponse refresh(String refreshToken, Long id) throws EntityNotFoundException, JwtException {
-        var u = userRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+    public AuthnResponse refresh(String refreshToken, Long id) throws EntityNotFoundException, JwtException {
+        var u = userRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("USER_NOT_FOUND"));
         var validToken = jwtService.verify(refreshToken, u);
-        
+
         if (!validToken)
-            throw new JwtException("Invalid refresh token");
+            throw new JwtException("INVALID_REFRESH_TOKEN");
 
         var access = jwtService.generate(u);
         var refresh = jwtService.generateRefresh(u);
-        return new TokenResponse(access, refresh);
+        return new AuthnResponse(access, refresh, u.getId());
     }
 
     public String sendMagicLink(String email) {
