@@ -19,6 +19,11 @@ export async function getAllPatients() {
     return await res.json();
 }
 
+/**
+ * Get a patient by ID
+ * @returns {Promise<Patient>}
+ * @throws {Error} - PATIENT_NOT_FOUND, UNKNOWN_ERROR
+ */
 export async function getPatientById(id) {
     const res = await fetchApi(endpoint + `/${id}`);
     if (res.status === 404) {
@@ -30,7 +35,12 @@ export async function getPatientById(id) {
     return await res.json();
 }
 
-// Get a username by email or national ID
+/**
+ * Get a patient by username
+ * @param {string} username - Patient's username, either email or national ID
+ * @returns {Promise<Patient>} - Patient data
+ * @throws {Error} - PATIENT_NOT_FOUND, UNKNOWN_ERROR
+ */
 export async function getPatientByUsername(username) {
     const res = await fetchApi(`endpoint?username=${username}`);
     if (res.status === 404) {
@@ -52,7 +62,7 @@ export async function getPatientByUsername(username) {
  * @param {string} patient.email - Patient's email
  * @param {string} patient.nationalId - Patient's national ID
  * @returns {Promise<void>}
- * @throws {AuthenticationError}
+ * @throws {Error} - EMAIL_ALREADY_EXISTS, NATIONAL_ID_ALREADY_EXISTS, INVALID_EMAIL, INVALID_NATIONAL_ID, UNKNOWN_ERROR
  */
 export async function addPatient(patient) {
     const res = await fetchApi(endpoint, {

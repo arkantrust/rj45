@@ -1,30 +1,27 @@
-export default class PatientsPage extends HTMLElement {
-  constructor() {
-    // Always call super first in constructor
-    super();
-  }
+import '../styles/sign-in.css';
+import { addPatient, getAllPatients } from '../services/patient.js';
 
-  connectedCallback() {
-    // Create a shadow root
-    const shadow = this.attachShadow({ mode: "open" });
+/**
+ * @typedef {Object} Patient
+ * @property {number} id - Patient ID
+ * @property {string} name - Patient's full name
+ * @property {string} email - Patient's email
+ * @property {string} nationalId - Patient's national ID
+ * @property {boolean} discharged - Patient's discharge status
+ */
 
-    const message = document.createElement("h1");
-    message.setAttribute("class", "centered");
-    message.textContent = 'Bienvenido a S.T.A.R!';
+export default async function PatientsPage(page) {
+    const patients = await getAllPatients();
 
-    // Create some CSS to apply to the shadow dom
-    const style = document.createElement("style");
-    console.log(style.isConnected);
+    const title = document.createElement('h1');
+    title.textContent = 'Patients';
+    page.appendChild(title);
 
-    style.textContent = `
-      .centered {
-        display: block;
-        align-content: center;
-      }
-    `;
-
-    // Attach the created elements to the shadow dom
-    shadow.appendChild(style);
-    shadow.appendChild(message);
-  }
+    const list = document.createElement('ul');
+    page.appendChild(list);
+    patients.forEach(patient => {
+        const patientEl = document.createElement('li');
+        patientEl.textContent = patient.name;
+        list.appendChild(patientEl);
+    });
 }
