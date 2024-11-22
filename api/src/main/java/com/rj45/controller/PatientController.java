@@ -1,5 +1,6 @@
 package com.rj45.controller;
 
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -63,6 +64,8 @@ public class PatientController {
         try {
             var added = service.add(p.name(), p.email(), p.nationalId());
             return ResponseEntity.ok(added);
+        } catch (EntityExistsException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

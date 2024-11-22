@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.rj45.util.EmailValidator;
@@ -26,23 +25,19 @@ public class PatientService {
             throws IllegalArgumentException, EntityExistsException {
 
         if (!new EmailValidator(email).isValid())
-            throw new IllegalArgumentException("Invalid email");
+            throw new IllegalArgumentException("INVALID_EMAIL");
 
         if (!new NationalIdValidator(nationalId).isValid())
-            throw new IllegalArgumentException("Invalid national ID");
+            throw new IllegalArgumentException("INVALID_NATIONAL_ID");
 
         // Only if we found a conflict, we do a detailed check to provide a more
         // informative error message
         if (repo.existsByEmailOrNationalId(email, nationalId)) {
-            List<String> errors = new ArrayList<>();
-
             if (repo.existsByEmail(email))
-                errors.add("Email is already registered");
+            throw new EntityExistsException("EMAIL_ALREADY_REGISTERED");
 
             if (repo.existsByNationalId(nationalId))
-                errors.add("National ID is already registered");
-
-            throw new EntityExistsException(String.join(", ", errors));
+            throw new EntityExistsException("NATIONAL_ID_ALREADY_REGISTERED");
         }
 
         Patient p = Patient.builder()
@@ -76,7 +71,7 @@ public class PatientService {
         } else if (nationalId.isValid()) {
             box = repo.findByNationalId(username);
         } else {
-            throw new IllegalArgumentException("Unrecognized username format");
+            throw new IllegalArgumentException("UNKNOWN_USERNAME");
         }
 
         if (!box.isPresent())
