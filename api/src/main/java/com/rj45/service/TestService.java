@@ -11,8 +11,10 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
+import com.rj45.repository.CommentRepository;
 import com.rj45.repository.TestRepository;
 import com.rj45.model.Test;
+import com.rj45.model.Comment;
 import com.rj45.model.Measurement;
 import com.rj45.model.User;
 import com.rj45.model.Patient;
@@ -23,16 +25,24 @@ public class TestService {
 
     private final TestRepository testRepo;
 
+    private final CommentRepository commentRepo;
+
     private final UserService userService;
 
     private final PatientService patientService;
+
+    public record CommentResponse(
+        UUID id,
+        String content
+    ) {};
 
     private record TestResponse(
         UUID id,
         String type,
         List<Measurement> measurements,
         Long patientId,
-        Long evaluatorId
+        Long evaluatorId,
+        List<CommentResponse> comments
     ) {};
 
     public List<TestResponse> getAll(Long patientId, Long evaluatorId) {
@@ -52,7 +62,8 @@ public class TestService {
             t.getType(),
             t.getMeasurements(),
             t.getPatient().getId(),
-            t.getEvaluator().getId()
+            t.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
         )).toList();
     }
 
@@ -63,7 +74,8 @@ public class TestService {
             t.getType(),
             t.getMeasurements(),
             t.getPatient().getId(),
-            t.getEvaluator().getId()
+            t.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
         );
     }
 
@@ -105,7 +117,8 @@ public class TestService {
             t.getType(),
             t.getMeasurements(),
             t.getPatient().getId(),
-            t.getEvaluator().getId()
+            t.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
         );
     }
 
@@ -147,7 +160,8 @@ public class TestService {
             updated.getType(),
             updated.getMeasurements(),
             updated.getPatient().getId(),
-            updated.getEvaluator().getId()
+            updated.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
         );
     }
 
@@ -156,6 +170,75 @@ public class TestService {
             throw new EntityNotFoundException("TEST_NOT_FOUND");
 
         testRepo.deleteById(id);
+    }
+
+    public List<CommentResponse> getComments(UUID id) {
+        return this.getById(id).comments();
+    }
+
+    public TestResponse addComment(UUID id, String content) {
+        Test t = testRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("TEST_NOT_FOUND"));
+
+        var comment = new Comment(
+            UUID.randomUUID(),
+            content,
+            LocalDateTime.now().toEpochSecond(ZoneOffset.UTC),
+            t
+        );
+
+        commentRepo.save(comment);
+
+        t.getComments().add(comment);
+
+        return new TestResponse(
+            t.getId(),
+            t.getType(),
+            t.getMeasurements(),
+            t.getPatient().getId(),
+            t.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
+        );
+    }
+
+    public TestResponse deleteComment(UUID testId, UUID commentId) throws EntityNotFoundException {
+        if (!testRepo.existsById(testId))
+            throw new EntityNotFoundException("TEST_NOT_FOUND");
+
+        commentRepo.deleteById(commentId);
+            
+        Test t = testRepo.findById(testId).get();
+
+        return new TestResponse(
+            t.getId(),
+            t.getType(),
+            t.getMeasurements(),
+            t.getPatient().getId(),
+            t.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
+        );
+
+    }
+
+    public Object editComment(UUID testId, UUID commentId, String content) {
+        if (!testRepo.existsById(testId))
+            throw new EntityNotFoundException("TEST_NOT_FOUND");
+
+        var comment = commentRepo.findById(commentId).orElseThrow(() -> new EntityNotFoundException("COMMENT_NOT_FOUND"));
+
+        comment.setContent(content);
+
+        commentRepo.save(comment);
+
+        Test t = testRepo.findById(testId).get();
+
+        return new TestResponse(
+            t.getId(),
+            t.getType(),
+            t.getMeasurements(),
+            t.getPatient().getId(),
+            t.getEvaluator().getId(),
+            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
+        );
     }
 
 }

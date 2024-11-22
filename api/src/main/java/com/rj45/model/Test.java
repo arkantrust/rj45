@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 
@@ -45,5 +46,8 @@ public class Test {
     @ManyToOne(targetEntity = User.class)
     @JoinColumn(name = "evaluator_id", nullable = false)
     private User evaluator;
+
+    @OneToMany(mappedBy = "test")
+    private List<Comment> comments;
 
 }

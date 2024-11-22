@@ -18,6 +18,7 @@ import org.springframework.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.rj45.service.TestService;
@@ -55,6 +56,18 @@ public class TestController {
         }
     }
 
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<?> getComments(@PathVariable UUID id) {
+        try {
+            var comments = service.getComments(id);
+            return ResponseEntity.ok(comments);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     private record AddTestRequest(
         String type,
         @Nullable List<Measurement> measurements,
@@ -74,6 +87,22 @@ public class TestController {
             return ResponseEntity.ok(added);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<?> addComment(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        try {
+            var test = service.addComment(id, (String) body.get("content"));
+            return ResponseEntity.ok(test);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NullPointerException e) {
+            return ResponseEntity.badRequest().body("NO_CONTENT_PROVIDED");
+        } catch (ClassCastException e) {
+            return ResponseEntity.badRequest().body("INVALID_CONTENT");
         }
     }
 
@@ -97,11 +126,43 @@ public class TestController {
         }
     }
 
+    @PutMapping("/{testId}/comments/{commentId}")
+    public ResponseEntity<?> editComment(
+        @PathVariable UUID testId,
+        @PathVariable UUID commentId,
+        @RequestBody Map<String, Object> body
+        ) {
+        try {
+            var test = service.editComment(testId, commentId, (String) body.get("content"));
+            return ResponseEntity.ok(test);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NullPointerException e) {
+            return ResponseEntity.badRequest().body("NO_CONTENT_PROVIDED");
+        } catch (ClassCastException e) {
+            return ResponseEntity.badRequest().body("INVALID_CONTENT");
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable UUID id) {
         try {
             service.delete(id);
             return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{testId}/comments/{commentId}")
+    public ResponseEntity<?> deleteComment(@PathVariable UUID testId, @PathVariable UUID commentId) {
+        try {
+            var test = service.deleteComment(testId, commentId);
+            return ResponseEntity.ok(test);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
