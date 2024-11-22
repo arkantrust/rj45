@@ -42,12 +42,15 @@ public class JwtAuthnFilter extends OncePerRequestFilter {
         try {
             String token = extractJwtFromRequest(req);
             if (token == null)
-                throw new JwtException("No JWT token found in request");
+                throw new JwtException("NO_ACCESS_TOKEN");
 
             if (!jwtService.verify(token))
-                throw new JwtException("Invalid JWT token");
+                throw new JwtException("INVALID_ACCESS_TOKEN");
 
             String email = jwtService.extractEmail(token);
+
+            if (email == null)
+                throw new JwtException("INVALID_EMAIL");
     
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
     
@@ -60,7 +63,7 @@ public class JwtAuthnFilter extends OncePerRequestFilter {
             
             SecurityContextHolder.getContext().setAuthentication(authToken);
         } catch (JwtException e) {
-            log.error("JWT validation failed: {}", e.getMessage());
+            log.error(e.getMessage());
             // Don't set authentication - will result in 401
         }
         
