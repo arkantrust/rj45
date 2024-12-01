@@ -19,9 +19,9 @@ export const routes = [
   { path: '/dashboard', view: (page, { params }) => DashboardPage(page), requireAuth: true },
   { path: '/profile', view: (page, { params }) => ProfilePage(page), requireAuth: true },
   { path: '/patients', view: (page, { params }) => PatientsPage(page), requireAuth: true },
-  { path: '/patients/:id', view: async ({ params }) => PatientDetailsPage(page, param.id), requireAuth: true },
+  { path: '/patients/:id', view: async (page, { params }) => PatientDetailsPage(page, params.id), requireAuth: true },
   { path: '/users', view: (page, { params }) => UsersPage(page), requireAuth: true },
-  { path: '/users/:id', view: async ({ params }) => UserDetailsPage(page, param.id), requireAuth: true },
+  { path: '/users/:id', view: async (page, { params }) => UserDetailsPage(page, params.id), requireAuth: true },
   { path: '/tests/:id', view: async (page, { params }) => TestDetailsPage(page, params.id), requireAuth: false }
 ];
 
