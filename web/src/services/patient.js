@@ -9,14 +9,15 @@ import { fetchApi } from "../utils/fetchs";
  * @property {boolean} discharged - Patient's discharge status
  */
 
-const endpoint = '/patients';
+const endpoint = 'patients';
 
 export async function getAllPatients() {
     const res = await fetchApi(endpoint);
     if (!res.ok)
         throw new Error('UNKNOWN_ERROR');
+    const patients = await res.json();
 
-    return await res.json();
+    return patients;
 }
 
 /**
@@ -42,7 +43,7 @@ export async function getPatientById(id) {
  * @throws {Error} - PATIENT_NOT_FOUND, UNKNOWN_ERROR
  */
 export async function getPatientByUsername(username) {
-    const res = await fetchApi(`endpoint?username=${username}`);
+    const res = await fetchApi(endpoint + `?username=${username}`);
     if (res.status === 404) {
         throw new Error('PATIENT_NOT_FOUND');
     } else if (res.status === 400) {
