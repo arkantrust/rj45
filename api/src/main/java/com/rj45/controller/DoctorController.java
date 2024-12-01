@@ -1,5 +1,4 @@
 package com.rj45.controller;
-
 import com.rj45.model.Doctor;
 import com.rj45.model.Patient;
 import com.rj45.repository.DoctorRepository;
