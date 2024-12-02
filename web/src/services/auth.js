@@ -47,7 +47,7 @@ export const userId = localStorage.getItem(USER_STORAGE_KEY);
    * @param {AuthResponse} data
    * @private
    */
-function _setAuthData(data) {
+export function setAuthData(data) {
   setAccessToken(data.access);
   setRefreshToken(data.refresh);
   localStorage.setItem(USER_STORAGE_KEY, data.userId);
@@ -90,10 +90,10 @@ export async function signIn(username, password) {
     const data = await res.json();
     
     // Validate response data
-    _validateAuthResponse(data);
+    validateAuthResponse(data);
 
     // Set tokens
-    _setAuthData(data);
+    setAuthData(data);
   } catch (error) {
     console.error('[Auth Service] Sign in error:', error);
     throw _handleAuthError(error);
@@ -178,7 +178,7 @@ export async function getUser() {
 export async function logout() {
   try {
     // Attempt to invalidate session on the server
-    await fetchApi('auth/logout', { method: 'POST' }).catch(() => {});
+    // await fetchApi('auth/logout', { method: 'POST' }).catch(() => {});
   } finally {
     // Clean up local state regardless of server response
     _clearAuthData();
@@ -223,7 +223,7 @@ function _validateSignUpData(data) {
  * @param {AuthResponse} data
  * @private
  */
-function _validateAuthResponse(data) {
+export function validateAuthResponse(data) {
   if (!data.access || !data.refresh || !data.userId) {
     throw new AuthenticationError('Invalid auth response', 'INVALID_RESPONSE');
   }
