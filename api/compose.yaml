@@ -1,10 +1,9 @@
-name: rj45-backend
+name: rj45
 
 services:
   api:
-    image: 'rj45-api:latest'
-    restart: always
     container_name: rj45-api
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,7 +20,7 @@ services:
 
   db:
     image: 'postgres:16'
-    restart: always
+    restart: unless-stopped
     container_name: rj45-db
     environment:
       POSTGRES_DB: db
@@ -30,12 +29,12 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - rj45-db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     networks:
       - backend
 
 volumes:
-  rj45-db:
+  db:
 
 networks:
   backend:

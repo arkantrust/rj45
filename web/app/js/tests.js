@@ -38,10 +38,14 @@ function populateTestsTable(tests) {
   testsTableBody.innerHTML = ''; // Clear previous data
   tests.forEach(test => {
     const row = document.createElement('tr');
+    const [year, month, day, hour, minute, second] = test.createdAt;
+
+    const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second)).toLocaleString();
+
     row.innerHTML = `
               <td>${test.id}</td>
               <td>${test.type}</td>
-              <td>${test.createdAt / 10}</td>
+              <td>${date}</td>
           `;
     row.addEventListener('click', () => {
       window.location.href = `/test/?id=${test.id}`;

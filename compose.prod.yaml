@@ -1,0 +1,93 @@
+name: star
+
+services:
+
+  db:
+    container_name: db
+    image: 'postgres:16'
+    restart: always
+    ports:
+      - 5432:5432
+    secrets:
+      - db_user
+      - db_password
+    environment:
+      POSTGRES_DB: prod
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: db_password
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  api:
+    container_name: api
+    image: 'ghcr.io/arkantrust/star-api'
+    restart: always
+    ports:
+      - '8080:8080' # host:container
+    secrets:
+      - db_user
+      - db_password
+      - jwt_secret
+    environment:
+      - DB_URL=postgresql://db/prod
+      - DB_USER=/run/secrets/db_user
+      - DB_PASSWORD=/run/secrets/db_password
+      - JWT_SECRET=/run/secrets/jwt_secret
+    depends_on:
+      - db
+    networks:
+      - backend
+      - frontend
+
+  analytics:
+    container_name: analytics
+    image: 'ghcr.io/arkantrust/star-analytics'
+    restart: always
+    ports:
+      - '8000:8000' # host:container
+    secrets:
+      - jwt_secret
+    environment:
+      - API_URL=http://api:8080
+      - JWT_SECRET=/run/secrets/jwt_secret
+    depends_on:
+      - api
+    networks:
+      - backend
+      - frontend
+
+  web:
+    container_name: web
+    image: 'ghcr.io/arkantrust/star-web'
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      - API_URL=http://api:8080
+      - ANALYTICS_URL=http://analytics:8000
+      - NGINX_PORT=80
+    depends_on:
+      - api
+      - analytics
+    networks:
+      - frontend
+
+secrets:
+  db_user:
+    environment: "DB_USER"
+  db_password:
+    environment: "DB_PASSWORD"
+  jwt_secret:
+    environment: "JWT_SECRET"
+
+volumes:
+  db:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
