@@ -1,6 +1,7 @@
 import '../styles/patient-details.css';
 import { getPatientById } from "../services/patient";
 import { getTest, addTest } from "../services/test";
+// import mqtt from 'mqtt';
 
 /**
  * @typedef {Object} Patient
@@ -11,8 +12,13 @@ import { getTest, addTest } from "../services/test";
  * @property {boolean} discharged - Patient's discharge status
 */
 
+const startTestTopic = 'test/start';
+const receiveStatusTopic = 'test/status';
+
 export default async function PatientDetailsPage(page, patientId) {
   const patient = await getPatientById(patientId);
+
+  const mqttClient = initMqtt();
 
   const title = document.createElement('h1');
   title.textContent = patient.name;
@@ -42,12 +48,13 @@ export default async function PatientDetailsPage(page, patientId) {
   });
 
   const form = document.getElementById('addTestForm');
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault(); // Prevent page reload
     const type = document.getElementById('testType').value.trim();
     if (type) {
       try {
-        addTest(patient, type); // Update the server
+        const test = await addTest(patient, type); // Update the server
+        addMeasurements(mqttClient, test.id);
       } catch (e) {
         console.log(e);
       }
@@ -133,37 +140,46 @@ function formatType(type) {
   return type === 'footing' ? 'Zapateo' : 'Taconeo';
 }
 
-const startTestTopic = 'test/start';
-const receiveStatusTopic = 'test/status'
-// function initMqtt() {
-//   const client = new Paho.MQTT.Client('broker.emqx.io', Number(8083), "rj45-web");
-//   // Message listener
-//   client.onMessageArrived = function (msg) {
-//     console.log("Arrived!: " + msg.payloadString);
-//   }
+function initMqtt() {
+  const client = new Paho.MQTT.Client('broker.emqx.io', Number(8083), "star-web"); // current implementation
 
-//   // Connect to the MQTT broker
-//   client.connect({
-//     onSuccess: function () {
-//       client.subscribe(receiveStatusTopic);
-//       console.log("conectado!")
-//     }
-//   });
+  // Message listener
+  client.onMessageArrived = function (msg) {
+    console.log("Arrived!: " + msg.payloadString);
+  }
 
-//   return client;
-// }
+  // Connect to the MQTT broker
+  client.connect({
+    onSuccess: function () {
+      client.subscribe(receiveStatusTopic);
+      console.log("conectado!")
+    }
+  });
 
-// document.addEventListener('DOMContentLoaded', async () => {
-//   const client = initMqtt();
-//   document.getElementById("addTestForm").addEventListener(
-//     'submit', (e) => {
-//       e.preventDefault();
-//       const test = document.getElementById("testType").value;
-//       const message = new Paho.MQTT.Message(type);
-//       message.destinationName = startTestTopic;
-//       client.send(message);
-//       console.log(type + " started");
-//       document.getElementById("addTestForm").style.display = "none";
-//     }
-//   );
-// });
+  // new implementation
+  // const client = mqtt.connect("ws://broker.emqx.io", {
+  //   host: "broker.emqx.io",
+  //   port: 8083,
+  //   username: "star-web",
+  // });
+
+  // client.on("connect", () => {
+  //   client.subscribe(receiveStatusTopic, (err) => {
+  //     if (!err)
+  //       console.log("Subscribed to " + receiveStatusTopic);
+  //   });
+  // });
+
+  return client;
+}
+
+function addMeasurements(mqttClient, testId) {
+  const message = new Paho.MQTT.Message(testId);
+  message.destinationName = startTestTopic;
+  mqttClient.send(message);
+  // const message = new mqttClient.publish(startTestTopic, testId, null, (err, packet) => {
+  //   console.log("confirmation received")
+  //   // history.go(0); // refreshes the page
+  // });
+  console.log("Test started for test ID: " + testId);
+}
