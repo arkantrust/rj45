@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.UUID;
 
 import com.rj45.repository.CommentRepository;
+import com.rj45.repository.PatientRepository;
 import com.rj45.repository.TestRepository;
+import com.rj45.repository.UserRepository;
 import com.rj45.model.Test;
 import com.rj45.model.Comment;
 import com.rj45.model.Measurement;
@@ -27,9 +29,9 @@ public class TestService {
 
     private final CommentRepository commentRepo;
 
-    private final UserService userService;
+    private final UserRepository userRepo;
 
-    private final PatientService patientService;
+    private final PatientRepository patientRepo;
 
     public record CommentResponse(
         UUID id,
@@ -39,6 +41,7 @@ public class TestService {
     private record TestResponse(
         UUID id,
         String type,
+        long timestamp,
         List<Measurement> measurements,
         Long patientId,
         Long evaluatorId,
@@ -60,6 +63,7 @@ public class TestService {
         return tests.stream().map(t -> new TestResponse(
             t.getId(),
             t.getType(),
+            t.getTimestamp(),
             t.getMeasurements(),
             t.getPatient().getId(),
             t.getEvaluator().getId(),
@@ -72,6 +76,7 @@ public class TestService {
         return new TestResponse(
             t.getId(),
             t.getType(),
+            t.getTimestamp(),
             t.getMeasurements(),
             t.getPatient().getId(),
             t.getEvaluator().getId(),
@@ -87,19 +92,9 @@ public class TestService {
         if (measurements == null)
             measurements = List.of();
 
-        User user = null;
-        try {
-            user = userService.getById(evaluatorId);
-        } catch (EntityNotFoundException e) {
-            throw new EntityNotFoundException("EVALUATOR_NOT_FOUND");
-        }
+        User user = userRepo.findById(evaluatorId).orElseThrow(() -> new EntityNotFoundException("EVALUATOR_NOT_FOUND"));
 
-        Patient patient = null;
-        try {
-            patient = patientService.getById(patientId);
-        } catch (EntityNotFoundException e) {
-            throw new EntityNotFoundException("PATIENT_NOT_FOUND");
-        }
+        Patient patient = patientRepo.findById(patientId).orElseThrow(() -> new EntityNotFoundException("PATIENT_NOT_FOUND"));
 
         Test added = Test.builder()
             .id(UUID.randomUUID())
@@ -115,6 +110,7 @@ public class TestService {
         return new TestResponse(
             t.getId(),
             t.getType(),
+            t.getTimestamp(),
             t.getMeasurements(),
             t.getPatient().getId(),
             t.getEvaluator().getId(),
@@ -131,22 +127,12 @@ public class TestService {
         Test t = testRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("TEST_NOT_FOUND"));
 
         User user = null;
-        if (evaluatorId != null) {
-            try {
-                user = userService.getById(evaluatorId);
-            } catch (EntityNotFoundException e) {
-                throw new EntityNotFoundException("EVALUATOR_NOT_FOUND");
-            }
-        }
+        if (evaluatorId != null)
+            user = userRepo.findById(evaluatorId).orElseThrow(() -> new EntityNotFoundException("EVALUATOR_NOT_FOUND"));
 
         Patient patient = null;
-        if (patientId != null) {
-            try {
-                patient = patientService.getById(patientId);
-            } catch (EntityNotFoundException e) {
-                throw new EntityNotFoundException("PATIENT_NOT_FOUND");
-            }
-        }
+        if (patientId != null)
+            patient = patientRepo.findById(patientId).orElseThrow(() -> new EntityNotFoundException("PATIENT_NOT_FOUND"));
 
         t.setType(type != null ? type : t.getType());
         t.setMeasurements(measurements != null ? measurements : t.getMeasurements());
@@ -158,10 +144,11 @@ public class TestService {
         return new TestResponse(
             updated.getId(),
             updated.getType(),
+            updated.getTimestamp(),
             updated.getMeasurements(),
             updated.getPatient().getId(),
             updated.getEvaluator().getId(),
-            t.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
+            updated.getComments().stream().map(c -> new CommentResponse(c.getId(), c.getContent())).toList()
         );
     }
 
@@ -193,6 +180,7 @@ public class TestService {
         return new TestResponse(
             t.getId(),
             t.getType(),
+            t.getTimestamp(),
             t.getMeasurements(),
             t.getPatient().getId(),
             t.getEvaluator().getId(),
@@ -211,6 +199,7 @@ public class TestService {
         return new TestResponse(
             t.getId(),
             t.getType(),
+            t.getTimestamp(),
             t.getMeasurements(),
             t.getPatient().getId(),
             t.getEvaluator().getId(),
@@ -234,6 +223,7 @@ public class TestService {
         return new TestResponse(
             t.getId(),
             t.getType(),
+            t.getTimestamp(),
             t.getMeasurements(),
             t.getPatient().getId(),
             t.getEvaluator().getId(),
