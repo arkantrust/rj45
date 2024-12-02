@@ -21,7 +21,16 @@ public class PatientService {
 
     private final PatientRepository repo;
 
-    public Patient add(String name, String email, String nationalId)
+        private record PatientResponse(
+        Long id,
+        String name,
+        String email,
+        String nationalId,
+        boolean discharged,
+        List<String> tests
+    ) {};
+
+    public PatientResponse add(String name, String email, String nationalId)
             throws IllegalArgumentException, EntityExistsException {
 
         if (!new EmailValidator(email).isValid())
@@ -47,20 +56,42 @@ public class PatientService {
             .discharged(false)
             .build();
 
-        repo.save(p);
+        var patient = repo.save(p);
 
-        return p;
+        return new PatientResponse(
+            patient.getId(),
+            patient.getName(),
+            patient.getEmail(),
+            patient.getNationalId(),
+            patient.isDischarged(),
+            patient.getTests().stream().map(t -> t.getId().toString()).toList()
+        );
     }
 
-    public List<Patient> getAll() {
-        return repo.findAll();
+    public List<PatientResponse> getAll() {
+        return repo.findAll().stream().map(p -> new PatientResponse(
+            p.getId(),
+            p.getName(),
+            p.getEmail(),
+            p.getNationalId(),
+            p.isDischarged(),
+            p.getTests().stream().map(t -> t.getId().toString()).toList()
+        )).toList();
     }
 
-    public Patient getById(Long id) throws EntityNotFoundException {
-        return repo.findById(id).orElseThrow(EntityNotFoundException::new);
+    public PatientResponse getById(Long id) throws EntityNotFoundException {
+        var patient = repo.findById(id).orElseThrow(EntityNotFoundException::new);
+        return new PatientResponse(
+            patient.getId(),
+            patient.getName(),
+            patient.getEmail(),
+            patient.getNationalId(),
+            patient.isDischarged(),
+            patient.getTests().stream().map(t -> t.getId().toString()).toList()
+        );
     }
 
-    public Patient getByUsername(String username) throws EntityNotFoundException, IllegalArgumentException {
+    public PatientResponse getByUsername(String username) throws EntityNotFoundException, IllegalArgumentException {
         Optional<Patient> box = null;
 
         var email = new EmailValidator(username);
@@ -77,10 +108,19 @@ public class PatientService {
         if (!box.isPresent())
             throw new EntityNotFoundException();
 
-        return box.get();
+        var patient = box.get();
+
+        return new PatientResponse(
+            patient.getId(),
+            patient.getName(),
+            patient.getEmail(),
+            patient.getNationalId(),
+            patient.isDischarged(),
+            patient.getTests().stream().map(t -> t.getId().toString()).toList()
+        );
     }
 
-    public Patient update(Long id, String name, String email, String nationalId)
+    public PatientResponse update(Long id, String name, String email, String nationalId)
             throws EntityNotFoundException, IllegalArgumentException {
         Patient p = repo.findById(id).orElseThrow(EntityNotFoundException::new);
 
@@ -88,9 +128,16 @@ public class PatientService {
         p.setEmail(email != null ? email : p.getEmail());
         p.setNationalId(nationalId != null ? nationalId : p.getNationalId());
 
-        repo.save(p);
+        var patient = repo.save(p);
 
-        return p;
+        return new PatientResponse(
+            patient.getId(),
+            patient.getName(),
+            patient.getEmail(),
+            patient.getNationalId(),
+            patient.isDischarged(),
+            patient.getTests().stream().map(t -> t.getId().toString()).toList()
+        );
     }
 
     public void delete(Long id) throws EntityNotFoundException {
