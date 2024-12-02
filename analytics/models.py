@@ -10,6 +10,9 @@ class Measurement(BaseModel):
   gyro: Coordinate
   timestamp: int
 
+class SignalData(BaseModel):
+  accelerometer: list[dict]
+
 class Test(BaseModel):
   id: str
   type: str

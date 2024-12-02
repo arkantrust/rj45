@@ -1,9 +1,5 @@
 package com.rj45.controller;
 
-import com.rj45.dto.AnalysisDto;
-import com.rj45.model.Test;
-import com.rj45.service.TestService;
-import com.rj45.service.AnalyticsService;
 import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
 
@@ -25,7 +20,6 @@ import org.springframework.lang.Nullable;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,7 +33,6 @@ import com.rj45.model.Measurement;
 public class TestController {
 
     private final TestService service;
-    private final AnalyticsService analysisService;
 
     @GetMapping()
     public ResponseEntity<?> getAll(
@@ -178,24 +171,5 @@ public class TestController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-    @GetMapping("/{id}/analyze")
-    public ResponseEntity<?> analyzeTest(@PathVariable String id) {
-        try {
-            Test test = service.getTest(id);
-            return ResponseEntity.ok(analysisService.analyzeTest(test));
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
-        catch(IllegalArgumentException e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-        //TODO Find a better way to handle analysisService exception.
-        catch(Exception e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-
-    }
-
 
 }
