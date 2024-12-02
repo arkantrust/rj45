@@ -51,6 +51,10 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> res.sendError(401, "UNAUTHORIZED"))
+                .accessDeniedHandler((req, res, e) -> res.sendError(401, "UNAUTHORIZED"))
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
             .addFilterBefore(jwtAuthnFilter, UsernamePasswordAuthenticationFilter.class);
             // .logout(logout -> logout
