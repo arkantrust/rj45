@@ -73,7 +73,7 @@ public class AuthnController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (JwtException e) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

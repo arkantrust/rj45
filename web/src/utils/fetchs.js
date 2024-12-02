@@ -1,4 +1,5 @@
-import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from '../utils/jwt.js';
+import { getAccessToken, getRefreshToken } from '../utils/jwt.js';
+import { setAuthData, validateAuthResponse, logout, userId } from '../services/auth.js';
 import { apiUrl, analyticsUrl } from '../utils/config.js';
 
 // Types for better code clarity and IDE support
@@ -84,19 +85,16 @@ export async function fetchs(url, options = {}) {
   let attempts = 0;
 
   while (attempts <= retries) {
+    const normalizedHeaders = normalizeHeaders(headers);
+    const accessToken = getAccessToken();
+    if (accessToken)
+      normalizedHeaders.set('Authorization', `Bearer ${accessToken}`);
+    
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
     try {
-      const normalizedHeaders = normalizeHeaders(headers);
-      const accessToken = getAccessToken();
-
-      if (accessToken) {
-        normalizedHeaders.set('Authorization', `Bearer ${accessToken}`);
-      }
-
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-      const response = await fetch(url, {
+      const res = await fetch(url, {
         method,
         headers: normalizedHeaders,
         signal: controller.signal,
@@ -106,26 +104,26 @@ export async function fetchs(url, options = {}) {
       clearTimeout(timeoutId);
 
       // Handle 401 with token refresh
-      if (response.status === 401 && !skipRefresh) {
+      if (res.status === 401 && !skipRefresh) {
         try {
           await refreshAuthToken();
           return await fetchs(url, { ...options, skipRefresh: true });
         } catch (refreshError) {
           logout();
-          throw new TokenError('Authentication failed');
+          throw new TokenError(refreshError.message);
         }
       }
 
       // Handle other error status codes
-      if (!response.ok) {
+      if (!res.ok) {
         throw new ApiError(
-          `Request failed with status ${response.status}`,
-          response.status,
-          response
+          `Request failed with status ${res.status}`,
+          res.status,
+          res
         );
       }
 
-      return response;
+      return res;
 
     } catch (error) {
       attempts++;
@@ -153,25 +151,27 @@ export async function fetchs(url, options = {}) {
 async function refreshAuthToken() {
   const refreshToken = getRefreshToken();
   
-  if (!refreshToken) {
+  if (!refreshToken)
     throw new TokenError('No refresh token available');
-  }
 
-  const response = await fetch(`${apiUrl}/auth/refresh`, {
-    method: 'POST',
+  if (!userId)
+    throw new Error('No user ID available');
+
+  const res = await fetch(`${apiUrl}/auth/refresh/${userId}`, {
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${refreshToken}`
     }
   });
 
-  if (!response.ok) {
-    throw new TokenError('Failed to refresh token');
-  }
+  if (res.status === 403)
+    throw new TokenError('Invalid refresh token');
 
-  const data = await response.json();
-  setAccessToken(data.access);
-  setRefreshToken(data.refresh);
+  if (!res.ok)
+    throw new TokenError('Token refresh failed');
+
+  const data = await res.json();
+  validateAuthResponse(data);
+  setAuthData(data);
   return data;
 }
 
