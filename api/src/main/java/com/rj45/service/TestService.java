@@ -135,10 +135,18 @@ public class TestService {
             patient = patientRepo.findById(patientId).orElseThrow(() -> new EntityNotFoundException("PATIENT_NOT_FOUND"));
 
         t.setType(type != null ? type : t.getType());
-        t.setMeasurements(measurements != null ? measurements : t.getMeasurements());
         t.setEvaluator(user != null ? user : t.getEvaluator());
         t.setPatient(patient != null ? patient : t.getPatient());
 
+        if (measurements != null) {
+            // Normalize the timestamp in each measurement so they are relative to the first measurement
+            long firstTimestamp = measurements.get(0).getTimestamp();
+            for (Measurement m : measurements) {
+                m.setTimestamp(m.getTimestamp() - firstTimestamp);
+            }
+            t.setMeasurements(measurements);
+        }
+        
         Test updated = testRepo.save(t);
 
         return new TestResponse(

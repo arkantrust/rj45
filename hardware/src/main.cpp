@@ -95,7 +95,7 @@ void readMpu(JsonObject reading) {
   gyro["y"] = g.gyro.y;
   gyro["z"] = g.gyro.z;
 
-  reading["timestamp"] = millis();
+  reading["timestamp"] = micros();
 }
 
 bool connectWiFi()
@@ -180,10 +180,10 @@ void sendJSON(const JsonDocument &jsonDoc) {
 
   if (httpResponseCode == 200) {
     Serial.printf("HTTP Response code: %d\n", httpResponseCode);
-    String response = http.getString();
-    Serial.println("Response: " + response);
   } else {
     Serial.printf("Error sending HTTP PUT: %d\n", httpResponseCode);
+    String response = http.getString();
+    Serial.println("Response: " + response);
     setLed(ERROR);
   }
 
