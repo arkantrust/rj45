@@ -12,6 +12,8 @@ RUN mvn package -DskipTests
 
 FROM amazoncorretto:21-alpine AS runtime
 
+ENV SPRING_PROFILES_ACTIVE=prod
+
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
