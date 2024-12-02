@@ -1,43 +1,46 @@
 import Chart from 'chart.js/auto';
 import { getTest, addComment, getComments } from '../services/test.js';
+import { fetchAnalytics } from '../utils/fetchs.js';
 import '../styles/test-details.scss';
 
 export default async function TestDetailsPage(page, testId) {
   const test = await getTest(testId);
 
   const container = document.createElement('div');
-  page.appendChild(container);
 
   const title = document.createElement('h1');
-  title.textContent = 'Test';
+  title.textContent = 'Test Details';
   container.appendChild(title);
 
   const commentsContainer = document.createElement('div');
   commentsContainer.className = 'comments-container';
   commentsContainer.innerHTML = `
-  <h2>Comentarios</h2>
+  <h2>Comments</h2>
 
-  <button id="addComment">Añadir comentario</button>
+  <button id="addComment">Add Comment</button>
 
   <ul id="comments">
-    <li id="emptyState">No hay comentarios aún.</li>
+    <li id="emptyState">No comments yet.</li>
   </ul>
 
   <dialog id="addCommentFormDialog">
     <form id="addCommentForm">
-      <h2>Añadir un comentario</h2>
+      <h2>Add a Comment</h2>
       <label for="comment">
-        Comentario:
-        <input type="text" id="comment" name="comment" placeholder="El paciente..." />
+        Comment:
+        <input type="text" id="comment" name="comment" placeholder="The patient..." />
       </label>
       <div class="dialog-buttons">
-        <button type="submit">Añadir</button>
-        <button type="button" id="cancelDialog">Cancelar</button>
+        <button type="submit">Add</button>
+        <button type="button" id="cancelDialog">Cancel</button>
       </div>
     </form>
   </dialog>
   `;
+
   container.appendChild(commentsContainer);
+
+  page.appendChild(container);
 
   const dialog = document.getElementById('addCommentFormDialog');
 
@@ -68,11 +71,11 @@ export default async function TestDetailsPage(page, testId) {
 
   if (test.measurements.length === 0) {
     const noDataMessage = document.createElement('p');
-    noDataMessage.textContent = 'Este test no tiene datos aún';
+    noDataMessage.textContent = 'This test has no data yet';
     page.appendChild(noDataMessage);
     return;
   } else {
-    await renderCharts(test);
+    await renderCharts(container, test);
   }
 }
 
@@ -85,7 +88,7 @@ async function renderComments(testId) {
   if (comments.length === 0) {
     // Show empty state if no comments
     const emptyItem = document.createElement('li');
-    emptyItem.textContent = 'No hay comentarios aún.';
+    emptyItem.textContent = 'No comments yet.';
     emptyItem.className = 'empty';
     commentList.appendChild(emptyItem);
     return;
@@ -108,70 +111,177 @@ async function renderComments(testId) {
   });
 }
 
-async function renderCharts(test) {
+async function renderCharts(container, test) {
+  const accelerometer = test.measurements.map(m => ({
+    x: m.accel.x,
+    y: m.accel.y,
+    z: m.accel.z,
+    timestamp: m.timestamp
+  }));
 
-  const charts = ['accelXChart', 'accelYChart', 'accelZChart', 'gyroXChart', 'gyroYChart', 'gyroZChart'];
-  charts.forEach(chart => {
+  const res = await fetchAnalytics('/analysis', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      accelerometer
+    })
+  });
+
+  const analytics = await res.json();
+
+  console.log(analytics);
+
+  // Define chart configurations
+  const chartConfigs = [
+    {
+      id: 'accelXChart',
+      label: 'X Acceleration',
+      data: test.measurements.map(m => m.accel.x),
+      type: 'line'
+    },
+    {
+      id: 'accelYChart',
+      label: 'Y Acceleration',
+      data: test.measurements.map(m => m.accel.y),
+      type: 'line'
+    },
+    {
+      id: 'accelZChart',
+      label: 'Z Acceleration',
+      data: test.measurements.map(m => m.accel.z),
+      type: 'line'
+    },
+    {
+      id: 'gyroXChart',
+      label: 'X Gyroscope',
+      data: test.measurements.map(m => m.gyro.x),
+      type: 'line'
+    },
+    {
+      id: 'gyroYChart',
+      label: 'Y Gyroscope',
+      data: test.measurements.map(m => m.gyro.y),
+      type: 'line'
+    },
+    {
+      id: 'gyroZChart',
+      label: 'Z Gyroscope',
+      data: test.measurements.map(m => m.gyro.z),
+      type: 'line'
+    },
+    {
+      id: 'fftChart',
+      label: 'FFT Magnitude',
+      data: analytics.fft.magnitudes,
+      labels: analytics.fft.frequencies,
+      type: 'line',
+      xAxisLabel: 'Frequency (Hz)',
+      yAxisLabel: 'Magnitude'
+    },
+    {
+      id: 'autocorrelationChart',
+      label: 'Autocorrelation',
+      data: analytics.autocorrelation.values,
+      labels: analytics.autocorrelation.lags,
+      type: 'line',
+      xAxisLabel: 'Lag',
+      yAxisLabel: 'Autocorrelation'
+    }
+  ];
+
+  const chartWrapper = document.createElement('div');
+  chartWrapper.className = 'chart-wrapper';
+
+  // Create chart containers
+  chartConfigs.forEach(config => {
     const chartContainer = document.createElement('div');
     chartContainer.className = 'chart-container';
     const canvas = document.createElement('canvas');
     canvas.setAttribute('width', '400');
     canvas.setAttribute('height', '200');
-    canvas.id = chart;
+    canvas.id = config.id;
     chartContainer.appendChild(canvas);
-    container.appendChild(chartContainer);
+    chartWrapper.appendChild(chartContainer);
   });
 
-  // Extract data for each axis
-  const accelXData = test.measurements.map(m => m.accel.x);
-  const accelYData = test.measurements.map(m => m.accel.y);
-  const accelZData = test.measurements.map(m => m.accel.z);
-  const gyroXData = test.measurements.map(m => m.gyro.x);
-  const gyroYData = test.measurements.map(m => m.gyro.y);
-  const gyroZData = test.measurements.map(m => m.gyro.z);
+  container.appendChild(chartWrapper);
 
-  // TODO: Use actual frequency from the test data
-  // Prepare time axis assuming 10Hz frequency (0.1s intervals)
-  const timeLabels = test.measurements.map((_, index) => (index * 0.1).toFixed(1)); // e.g., [0.0, 0.1, 0.2, ...]
+  // Create time labels for sensor data charts
+  const timeLabels = test.measurements.map(m => m.timestamp);
 
-  // Create charts for each data set
-  createChart('accelXChart', 'X Acceleration', accelXData, timeLabels);
-  createChart('accelYChart', 'Y Acceleration', accelYData, timeLabels);
-  createChart('accelZChart', 'Z Acceleration', accelZData, timeLabels);
-  createChart('gyroXChart', 'X Gyroscope', gyroXData, timeLabels);
-  createChart('gyroYChart', 'Y Gyroscope', gyroYData, timeLabels);
-  createChart('gyroZChart', 'Z Gyroscope', gyroZData, timeLabels);
-};
+  // Render each chart
+  chartConfigs.forEach(config => {
+    createChart(config.id, config.label, config.data,
+      config.type === 'line' || config.type === 'bar' ? (config.labels || timeLabels) : null,
+      config.type,
+      config.xAxisLabel,
+      config.yAxisLabel
+    );
+  });
 
+  // Create indicators section
+  const indicatorsContainer = document.createElement('div');
+  indicatorsContainer.className = 'indicators-container';
+  indicatorsContainer.innerHTML = `
+    <h3>Signal Indicators</h3>
+    <ul>
+      <li>Total Energy: ${analytics.indicators.total_energy.toFixed(2)}</li>
+      <li>Min Frequency: ${analytics.indicators.min_frequency.toFixed(2)} Hz</li>
+      <li>Max Frequency: ${analytics.indicators.max_frequency.toFixed(2)} Hz</li>
+    </ul>
+  `;
+  container.appendChild(indicatorsContainer);
+}
 
 // Function to create a chart
-function createChart(id, label, data, timeLabels) {
+function createChart(id, label, data, labels, type = 'line', xAxisLabel = 'Time (s)', yAxisLabel = 'Value') {
   const ctx = document.getElementById(id).getContext('2d');
   new Chart(ctx, {
-    type: 'line',
+    type: type,
     data: {
-      labels: timeLabels,
+      labels: labels,
       datasets: [{
         label: label,
         data: data,
         borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderWidth: 1
+        backgroundColor: type === 'bar' ? 'rgba(75, 192, 192, 0.6)' : 'rgba(75, 192, 192, 0.2)',
+        borderWidth: 1,
+        fill: type === 'line'
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: context => `Value: ${context.raw}`
+          }
+        }
+      },
       scales: {
         x: {
           title: {
             display: true,
-            text: 'Time (s)'
+            text: xAxisLabel
+          },
+          ticks: {
+            maxRotation: 45, // Rotación para etiquetas largas
+            minRotation: 0
           }
         },
         y: {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Value'
+            text: yAxisLabel
           }
         }
       }

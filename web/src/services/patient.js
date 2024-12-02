@@ -76,13 +76,14 @@ export async function addPatient(patient) {
             name: patient.name.trim(),
             email: patient.email.trim(),
             nationalId: patient.nationalId.trim(),
-        })
+        }),
+        skipRefresh: true
     });
 
     // Patient already exists, possible errors: EMAIL_ALREADY_EXISTS, NATIONAL_ID_ALREADY_EXISTS
     if (res.status === 409) {
         const error = await res.json();
-        throw new ERROR(error);
+        throw new Error(error);
         // Some data was wrong, possible errors: INVALID_EMAIL, INVALID_NATIONAL_ID
     } else if (res.status === 400) {
         const error = await res.json();
