@@ -28,7 +28,6 @@ export default async function SignInPage(page) {
   inputsContainer.setAttribute("class", "inputsContainer");
 
   const form = document.createElement("form");
-  form.setAttribute("action", "mainMenu.html");
 
   // Campo de usuario
   const usernameLabel = document.createElement("label");
@@ -51,7 +50,7 @@ export default async function SignInPage(page) {
   passwordInput.setAttribute("class", "inputs");
   passwordInput.setAttribute("name", "password");
   passwordInput.setAttribute("required", true);
-S
+
   // Botón de envío
   const submitButton = document.createElement("button");
   submitButton.setAttribute("type", "submit");
@@ -105,7 +104,7 @@ S
 
     try {
       await signIn(username, password);
-      window.router.navigate("/mainMenu.html");
+      window.router.navigate("/dashboard");
     } catch (error) {
       let errorMsg = "";
       if (error.code === "INVALID_EMAIL") {

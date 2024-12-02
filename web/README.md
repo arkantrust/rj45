@@ -31,38 +31,28 @@ bun run preview
 
 ## Development
 
-It's still possible to run the app without docker, in fact it's recommended for development as the spring boot app will [reload on file changes](https://docs.spring.io/spring-boot/how-to/hotswapping.html#howto.hotswapping.fast-application-restarts).
+### Prerequisites
 
-### Database
-
-You need a PostgreSQL 16 database running. You can use docker to create one:
-
-This command will start a PostgreSQL 16 server with a `dev` database, `postgres` user and `postgres` password.
+You can run the API using the compose file in the [api](../api) directory:
 
 ``` bash
-docker run -d --name star-db -v star-db:/var/lib/postgresql/data -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=dev -p 5432:5432 postgres:16
+docker compose -f ./api/compose.yaml up # assuming you're on the root directory
 ```
 
-You can the access the database with:
+Then you can use the dockerfile in the analytics directory to run the analytics module:
 
-``` powershell
-docker exec -it star-db psql -U postgres -d dev
+``` bash
+docker build -t star-analytics ./analytics # assuming you're on the root directory
 ```
-
-> The volume `star-db` holds the data from the container to persist across restarts.
 
 ### Running the app
+
+Create the same `.env` file as in the previous section.
 
 Use the following command to run the app:
 
 ``` bash
-./mvnw spring-boot:run
+bun dev
 ```
 
-You can access the API at [http://localhost:8080](http://localhost:8080). Any changes to the code will be automatically reloaded.
-
-
-{
-  "access": "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiZXZhbHVhdG9yIiwiZW1haWwiOiJkYXZpZF9kdWxjZUBpZWVlLm9yZyIsIm5hbWUiOiJEYXZpZCBEdWxjZSIsInN1YiI6IjEiLCJpYXQiOjE3MzIyMzYwNTUsImV4cCI6MTczMjI1MDQ1NX0.ZBCojPlOhx8E0YwMhqQZE3HppCDgyjTb9dssfiOM8wc-XEMLwu_cnCzLQceHfbwr_L-yt-VZUCrB9f9BOCpXSg",
-  "refresh": "eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiZXZhbHVhdG9yIiwiZW1haWwiOiJkYXZpZF9kdWxjZUBpZWVlLm9yZyIsIm5hbWUiOiJEYXZpZCBEdWxjZSIsInN1YiI6IjEiLCJpYXQiOjE3MzIyMzYwNTUsImV4cCI6MTczMzUzMjA1NX0.ZRcMOqLqPcTvNP_ugqIN9mTnbPvBh031qs7Nc1K-NewlnfdPMorqmdKeDhH5TskTEqn2KNg_jglSZ95a13_cBQ"
-}
+You can access it at [http://localhost:5173](http://localhost:5173). Any changes to the code will be automatically reloaded.

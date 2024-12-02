@@ -27,5 +27,4 @@ export default function PatientDetailsPage(page, patientId) {
   const discharged = document.createElement('p');
   discharged.textContent = patient.discharged ? 'Dado de alta' : 'Admitido';
   page.appendChild(discharged);
-
 }
