@@ -1,6 +1,6 @@
 import '../styles/patient-details.css';
 import { getPatientById } from "../services/patient";
-import { getTest } from "../services/test";
+import { getTest, addTest } from "../services/test";
 
 /**
  * @typedef {Object} Patient
@@ -13,30 +13,6 @@ import { getTest } from "../services/test";
 
 export default async function PatientDetailsPage(page, patientId) {
   const patient = await getPatientById(patientId);
-
-  // const addTestForm = `
-  // <div class="form-popup" id="addTestForm">
-  //   <form class="form-container">
-  //     <h1>Nuevo test</h1>
-  //     <label for="type">Tipo de test:</label>
-  //     <select id="testType" name="type">
-  //       <option value="footing">Zapateo</option>
-  //       <option value="heeling">Taconeo</option>
-  //     </select>
-  //     <button type="submit" class="btn">Confirmar</button>
-  //     <button type="button" class="btn cancel" id="cancelTestButton">Close</button>
-  //   </form>
-  // </div>
-  //   `;
-  // page.appendChild(addTestForm);
-
-  // addTestButton.addEventListener('click', () => {
-  //   document.getElementById("addTestForm").style.display = "block";
-  // });
-
-  // document.getElementById("cancelTestButton").addEventListener('click', () => {
-  //   document.getElementById("addTestForm").style.display = "none";
-  // });
 
   const title = document.createElement('h1');
   title.textContent = patient.name;
@@ -54,19 +30,36 @@ export default async function PatientDetailsPage(page, patientId) {
   discharged.textContent = patient.discharged ? 'Dado de alta' : 'Admitido';
   page.appendChild(discharged);
 
-  const addTestButton = document.createElement('div');
-  page.appendChild(addTestButton);
-
-  const testsTitle = document.createElement('h2');
-  testsTitle.textContent = 'Tests';
-  page.appendChild(testsTitle);
-
-  const tests = await renderTests(patient.tests);
+  const tests = await renderTests(patient);
   page.appendChild(tests);
+
+  document.getElementById('addTestButton').addEventListener('click', () => {
+    document.getElementById('addTestDialog').showModal();
+  });
+
+  document.getElementById('cancelDialog').addEventListener('click', () => {
+    document.getElementById('addTestDialog').close();
+  });
+
+  const form = document.getElementById('addTestForm');
+  form.addEventListener('submit', e => {
+    e.preventDefault(); // Prevent page reload
+    const type = document.getElementById('testType').value.trim();
+    if (type) {
+      try {
+        addTest(patient, type); // Update the server
+      } catch (e) {
+        console.log(e);
+      }
+      form.reset(); // Clear the input field
+      document.getElementById('addTestDialog').close(); // Close the dialog
+    }
+  });
 }
 
-async function renderTests(testIds) {
+async function renderTests(patient) {
   const tests = [];
+  const testIds = patient.tests;
   for (const id of testIds) {
     const test = await getTest(id);
     tests.push(test);
@@ -75,12 +68,39 @@ async function renderTests(testIds) {
   const testsContainer = document.createElement('div');
   testsContainer.classList.add('tests-container');
 
+  const testsTitle = document.createElement('h2');
+  testsTitle.textContent = 'Pruebas';
+  testsContainer.appendChild(testsTitle);
+
+  const addTestButton = document.createElement('button');
+  addTestButton.textContent = 'Añadir prueba';
+  addTestButton.setAttribute('id', 'addTestButton');
+  testsContainer.appendChild(addTestButton);
+
+  const addTestDialog = document.createElement('dialog');
+  addTestDialog.setAttribute('id', 'addTestDialog');
+  addTestDialog.innerHTML = `
+    <form id="addTestForm">
+      <h2>Añadir una prueba</h2>
+      <select id="testType" name="testType" required>
+            <option value="" disabled selected>Tipo de prueba</option>
+            <option value="footing">Zapateo</option>
+            <option value="heeling">Taconeo</option>
+      </select>
+      <div class="dialog-buttons">
+        <button type="submit">Añadir</button>
+        <button type="button" id="cancelDialog">Cancelar</button>
+      </div>
+    </form>`;
+  testsContainer.appendChild(addTestDialog);
+
   const testsTable = document.createElement('table');
   testsTable.setAttribute('id', 'testsTable');
 
   testsTable.innerHTML = `
       <thead>
         <tr>
+          <th>ID</th>
           <th>Tipo</th>
           <th>Fecha</th>
         </tr>
@@ -96,8 +116,9 @@ async function renderTests(testIds) {
   tests.forEach(test => {
     const row = document.createElement('tr');
     row.innerHTML = `
+      <td>${test.id}</td>
       <td>${formatType(test.type)}</td>
-      <td>${test.timestamp * 1000}</td>
+      <td>${new Date(test.timestamp * 1000).toLocaleString()}</td>
     `;
     row.addEventListener('click', () => {
       window.location.href = `/tests/${test.id}`;

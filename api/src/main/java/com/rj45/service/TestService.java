@@ -103,6 +103,7 @@ public class TestService {
             .timestamp(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
             .evaluator(user)
             .patient(patient)
+            .comments(List.of())
             .build();
 
         Test t = testRepo.save(added);
