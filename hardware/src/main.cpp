@@ -15,15 +15,15 @@ const int MEASUREMENTS_COUNT = 210;
 const int LED_PIN = 16;
 
 // Wi-Fi and MQTT configuration
-const char *WIFI_SSID = "LABREDES";
-const char *WIFI_PASSWORD = "F0rmul4-1";
+const char *WIFI_SSID = "USER";
+const char *WIFI_PASSWORD = "29675771";
 const char *MQTT_BROKER = "broker.emqx.io";
 const char *MQTT_TOPIC = "test/start";
 const char *MQTT_USER = "A00395404Esp";
 const int MQTT_PORT = 1883;
 
 // Server configuration
-const char *SERVER_URL = "http://192.168.130.119:8080/tests";
+const char *SERVER_URL = "http://192.168.0.47:8080/tests";
 
 // Global objects
 Adafruit_MPU6050 mpu;
@@ -95,7 +95,7 @@ void readMpu(JsonObject reading) {
   gyro["y"] = g.gyro.y;
   gyro["z"] = g.gyro.z;
 
-  reading["timestamp"] = millis();
+  reading["timestamp"] = micros();
 }
 
 bool connectWiFi()
@@ -161,10 +161,8 @@ bool initializeMPU()
   return true;
 }
 
-void sendJSON(const JsonDocument &jsonDoc)
-{
-  if (WiFi.status() != WL_CONNECTED)
-  {
+void sendJSON(const JsonDocument &jsonDoc) {
+  if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Error: WiFi not connected");
     setLed(ERROR);
     return;
@@ -178,41 +176,35 @@ void sendJSON(const JsonDocument &jsonDoc)
   serializeJson(jsonDoc, jsonString);
 
   Serial.println(jsonString);
-  int httpResponseCode = http.POST(jsonString);
+  int httpResponseCode = http.PUT(jsonString);
 
-  if (httpResponseCode > 0)
-  {
+  if (httpResponseCode == 200) {
     Serial.printf("HTTP Response code: %d\n", httpResponseCode);
+  } else {
+    Serial.printf("Error sending HTTP PUT: %d\n", httpResponseCode);
     String response = http.getString();
     Serial.println("Response: " + response);
-  }
-  else
-  {
-    Serial.printf("Error sending HTTP POST: %d\n", httpResponseCode);
     setLed(ERROR);
   }
 
   http.end();
 }
 
-void mqttCallback(char *topic, byte *msg, unsigned int length)
-{
-  String testType = "";
+void mqttCallback(char *topic, byte *msg, unsigned int length) {
+  String testId = "";
   for (int i = 0; i < length; i++)
-  {
-    testType += (char)msg[i];
-  }
-  testType.trim();
+    testId += (char)msg[i];
+  
+  testId.trim();
 
-  Serial.println("Received test request: " + testType + " from topic: " + String(topic));
+  Serial.println("Received test request: " + testId + " from topic: " + String(topic));
 
-  if (testType.equalsIgnoreCase("heeling") || testType.equalsIgnoreCase("footing"))
-  {
+  if (testId.length() > 0) {
     setLed(READING);
 
     JsonDocument testData;
     JsonArray measurements = testData["measurements"].to<JsonArray>();
-    testData["type"] = testType;
+    testData["id"] = testId;
 
     for (int i = 0; i < MEASUREMENTS_COUNT; i++) {
       JsonObject reading = measurements.add<JsonObject>();
@@ -223,10 +215,8 @@ void mqttCallback(char *topic, byte *msg, unsigned int length)
     Serial.println("Sending measurements to server...");
     sendJSON(testData);
     setLed(READY);
-  }
-  else
-  {
-    Serial.println("Invalid test type! Must be 'footing' or 'heeling'");
+  } else {
+    Serial.println("Invalid test ID! Ensure the test ID is not empty.");
     setLed(ERROR);
   }
 }

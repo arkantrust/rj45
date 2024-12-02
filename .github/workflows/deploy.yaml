@@ -1,0 +1,29 @@
+name: Deploy to EC2
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: true
+        type: string
+      service:
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    runs-on: aws-vm
+    steps:
+    - name: Pull Docker image
+      run: |
+        sudo docker pull ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ inputs.image }}:latest
+
+    - name: Restart Service
+      run: sudo docker compose build ${{ inputs.service }} &&
+         sudo docker compose up --no-deps -d ${{ inputs.service }}
+
+    - name: Check running container
+        run: sudo docker ps | grep ${{ inputs.service }}

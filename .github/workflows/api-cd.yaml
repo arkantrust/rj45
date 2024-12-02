@@ -1,0 +1,30 @@
+name: API CD
+
+env:
+  IMAGE_NAME: star-api
+
+on:
+  push:
+    paths:
+      - 'api/**'
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build and push Docker image
+      uses: ./.github/workflows/publish.yaml
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        project: api
+
+  deploy:
+    runs-on: aws-vm
+    steps:
+    - name: Re-run service
+      uses: ./.github/workflows/deploy.yaml
+      with:
+        image: ${{ env.IMAGE_NAME }}
+        service: api

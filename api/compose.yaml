@@ -1,19 +1,19 @@
-name: rj45-backend
+name: star
 
 services:
   api:
-    image: 'rj45-api:latest'
-    restart: always
-    container_name: rj45-api
+    container_name: star-api
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - '8080:8080' # host:container
     environment:
-      - DB_URL=postgresql://rj45-db/db
+      - DB_URL=postgresql://star-db/dev
       - DB_USER=postgres
       - DB_PASSWORD=postgres
+      - JWT_SECRET=SQ6LL2JjN8iIwvRHP2eOCp1b45DAg+orPYie+rjVHakxbz5Ti54XrZpwLjxTt+OY8mL/jyUZzCMG9OP3Pftl8s6FRuLMdbX+pvEBENnDOHEMoF/T2uZtghMpdrohletoeXGGDSITkysTFUZk3Oj28uGLKQC5OPJ03Vl2DQWXlgehgHDzKDT3bR1glTNRMidhIbadpfmMiJBA0eybFYyZrXuP1WvJHHMlKsgTCYhRl1jgK60G5XdeVYBaAhURV/JrAKmpZdaqB4IkdhkRkmTOrCC1mNxBOEnBfJFpY5N4M3nX2jqMayH/M7rHXLm1qgbnYEA3Qadq4TTij5/O7+Yaxg==
     depends_on:
       - db
     networks:
@@ -21,22 +21,24 @@ services:
 
   db:
     image: 'postgres:16'
-    restart: always
-    container_name: rj45-db
+    restart: unless-stopped
+    container_name: star-db
     environment:
-      POSTGRES_DB: db
+      POSTGRES_DB: dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - 5432:5432
     volumes:
-      - rj45-db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     networks:
       - backend
 
 volumes:
-  rj45-db:
+  db:
+    name: star-db
 
 networks:
   backend:
     driver: bridge
+    name: star-backend

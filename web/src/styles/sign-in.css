@@ -1,0 +1,131 @@
+body {
+  display: flex;
+  flex-direction: column; /* Organiza los elementos en columnas */ 
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: rgb(1, 4, 9);
+  font-family: Montserrat;
+  
+}
+
+.loginContainer {
+
+  background-color: #ff000000;
+  padding: 40px;
+  border-radius: 16px ;
+  border: 1px solid rgb(240, 246, 252);
+  max-width: 495px;
+  width: 100%;
+  text-align: center;
+  color: #ffffff; 
+  height: 387px;
+}
+
+
+.inputsContainer{
+}
+
+.TopContainer{
+  display: flex;
+  flex-direction: column; /* Organiza los elementos en columnas */ 
+  justify-content: center; /* Alinea verticalmente */ 
+  align-items: center; /* Alinea horizontalmente */ 
+  max-width: 600px; 
+  width: 100%; 
+  height: auto; /* Ajusta la altura automáticamente */ 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+  color: #ffffff
+  
+}
+
+a{
+
+font-family: Montserrat;
+margin-left: 10px;
+font-size: 25px;
+color: rgb(104, 53, 255);
+
+}
+
+.BotContainer{
+  border: 1px solid  #fff;
+  margin-top: 30px;
+  display: flex;
+  flex-direction: row; /* Organiza los elementos en columnas */ 
+  justify-content: center; /* Alinea verticalmente */ 
+  align-items: center; /* Alinea horizontalmente */ 
+  padding: 20px; 
+  border-radius: 6px; 
+  max-width: 530px; 
+  width: 100%; 
+  height: auto; /* Ajusta la altura automáticamente */ 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+  color: #ffffff
+}
+
+label {
+  padding-left: 35px;
+  font-weight: 500;
+  font-family: Montserrat;
+  display: block;
+  text-align: left;
+  margin-bottom:20px;
+  color: #ffffff;
+  border: 0px solid #ffffff;
+}
+
+.inputs {
+  background-color: #f3f3f300;
+  font-family: sans-serif;
+  width: 420px;
+  height: 41px;
+  border: 1px solid #ffffff;
+  box-sizing: content-box;
+  text-align: center;
+  text-decoration: none;
+  margin-bottom:50px;
+  color: #fff;
+
+
+}
+
+.DataWeb{
+  font-family: Montserrat;
+  font-weight: 400;
+  font-size: 16px;
+  gap: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-top: 50px;
+  color: rgb(240, 246, 252);
+
+}
+
+button {
+  font-family: Montserrat;
+  font-weight: 900;
+  width: 85%;
+  background-color: rgb(104, 53, 255);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  transition: transform 0.2s ease;
+  height: 71px;
+}
+
+button:active {
+  transform: scale(0.75);
+}
+
+button:hover {
+  background-color:rgb(38, 13, 114);
+}
+
+.Logo{
+  padding-bottom: 30px;
+  color: rgb(240, 246, 252);
+
+}

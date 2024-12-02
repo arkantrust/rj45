@@ -1,70 +1,47 @@
 package com.rj45.model;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Table;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Builder
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "patients")
 public class Patient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
 
+    @Column(nullable = false)
     private String name;
-    private String natID;
+
+    @Column(name = "national_id", nullable = false, unique = true)
+    private String nationalId;
+    
+    @Column(nullable = false, unique = true)
     private String email;
+    
+    @Column(nullable = false)
     private boolean discharged;
 
-    public Patient() {
-    }
-
-    public Patient(long id, String name, String natID, String email) {
-        this.id = id;
-        this.name = name;
-        this.natID = natID;
-        this.email = email;
-        this.discharged = false;
-
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getNatID() {
-        return natID;
-    }
-
-    public void setNatID(String natID) {
-        this.natID = natID;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public boolean getStatus(){
-
-        return discharged;
-    }
-
-    public void setStatus(boolean status){
-
-        this.discharged = status;
-    }
+    @OneToMany(targetEntity = Test.class, mappedBy = "patient", cascade = CascadeType.ALL)
+    private List<Test> tests;
+    
 }

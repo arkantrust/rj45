@@ -1,24 +1,24 @@
-name: rj45-backend
+name: rj45
 
 services:
 
   db:
+    container_name: rj45-db
     image: 'postgres:16'
     restart: always
-    container_name: rj45-db
+    ports:
+      - 5432:5432
     environment:
       POSTGRES_DB: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - 5432:5432
     volumes:
-      - rj45-db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     networks:
       - backend
 
   api:
-    image: 'rj45-api:latest'
+    container_name: rj45-api
     restart: unless-stopped
     build:
       context: api
@@ -35,43 +35,44 @@ services:
       - backend
       - frontend
 
-  # analytics:
-  #   image: 'rj45-analytics:latest'
-  #   restart: unless-stopped
-  #   build:
-  #     context: analytics
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - '8081:8081'
-  #   environment:
-  #     - API_URL=http://api:8080
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - backend
-  #     - frontend
+  analytics:
+    container_name: rj45-analytics
+    restart: unless-stopped
+    build:
+      context: analytics
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000' # host:container
+    environment:
+      - API_URL=http://rj45-api:8080
+    depends_on:
+      - db
+      - api
+    networks:
+      - backend
+      - frontend
 
   web:
-    image: 'rj45-web:latest'
+    container_name: rj45-web
+    restart: unless-stopped
     build:
       context: web
       dockerfile: Dockerfile
-    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     environment:
-      - API_URL=http://api:8080
-      # - ANALYTICS_URL=http://analytics:8081
+      - API_URL=http://rj45-api:8080
+      - ANALYTICS_URL=http://rj45-analytics:8000
       - NGINX_PORT=80
     depends_on:
       - api
-      # - analytics
+      - analytics
     networks:
       - frontend
 
 volumes:
-  rj45-db:
+  db:
 
 networks:
   backend:
