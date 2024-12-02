@@ -78,6 +78,12 @@ public class AuthnService {
 
         var u = box.get();
 
+        if (!u.isActive())
+            throw new EntityNotFoundException("USER_NOT_ACTIVE");
+
+        if (!passwordEncoder.matches(password, u.getPassword()))
+            throw new BadCredentialsException("INVALID_PASSWORD");
+
         var access = jwtService.generate(u);
         var refresh = jwtService.generateRefresh(u);
         return new AuthnResponse(access, refresh, u.getId());
