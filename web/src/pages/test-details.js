@@ -1,6 +1,6 @@
 import Chart from 'chart.js/auto';
 import { getTest, addComment, getComments } from '../services/test.js';
-import '../styles/tests.css';
+import '../styles/tests.scss';
 
 export default async function TestDetailsPage(page, testId) {
   const test = await getTest(testId);

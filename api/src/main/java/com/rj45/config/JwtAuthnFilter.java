@@ -63,7 +63,7 @@ public class JwtAuthnFilter extends OncePerRequestFilter {
             
             SecurityContextHolder.getContext().setAuthentication(authToken);
         } catch (JwtException e) {
-            log.error(e.getMessage());
+            log.error("JWT_AUTH_FAILED: {}", e.getMessage());
             // Don't set authentication - will result in 401
         }
         
